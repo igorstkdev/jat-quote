@@ -83,7 +83,8 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - Distância em km **digitada pelo operador** na v1 (Google Maps automático fica para versão futura).
 - **Sem pedágio e sem markup no FTL** (confirmado em 07/11/2026 com o app atual).
 - Exemplo real: SP Capital, VAN R$ 3,60/km, 300 km → **R$ 1.080,00**; ad valorem 0,5% (da tabela), informativo.
-- ⚠️ "KM da Rota (mínimo 25 km)": NÃO CONFIRMADO se abaixo de 25 km o sistema bloqueia ou cobra 25 km. Pergunte antes de implementar.
+- **KM da rota mínimo 25 km**: abaixo disso o sistema **bloqueia** com a mensagem "KM da rota: mínimo 25 km." (confirmado em 07/11/2026).
+- **Condições comerciais do FTL**: texto padrão editável pelo Admin em uma área dedicada de configurações (não na tela da calculadora); aparece no resultado, no PDF, no "Copiar" e no e-mail.
 - Módulo com 3 abas (referência do app atual):
   - **Calculadora**: UF destino, Tipo de localidade, Tipo de veículo, KM da rota (com link "Consulte a quilometragem no Qualp"), Observações. Resultado: Valor do Frete (destaque) com UF/localidade/veículo, Tarifa por KM, KM da rota, Ad valorem, e o bloco de **condições comerciais** (texto padrão). Ações: Salvar cotação, Limpar, Copiar, Enviar e-mail.
   - **Tabelas de Preço** (submódulo de cadastro, pré-requisito da calculadora): busca por UF ou região, filtro de status, colunas UF, Região, Tipo, VAN, Utilitário, 1,5T, Ad valorem, Status, Versão, Ações; botões Importar CSV, Exportar CSV, Nova Tabela e "Excluir Tudo" (somente Admin, confirmação forte).

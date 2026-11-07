@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcularFtl, ROTULO_VEICULO, VEICULOS_FTL, type TarifaFtl } from './ftl.js';
+import { calcularFtl, KM_MINIMO_FTL, ROTULO_VEICULO, VEICULOS_FTL, type TarifaFtl } from './ftl.js';
 
 const f2 = (d: { toFixed(n: number): string }) => d.toFixed(2);
 
@@ -20,8 +20,8 @@ describe('calcularFtl', () => {
   it('frete = distância × tarifa/km do veículo', () => {
     // Sem vírgula, um único ponto é DECIMAL (formato de máquina, como vem da API).
     // Com vírgula, vale o padrão brasileiro. A tela envia sempre um dos dois formatos.
-    const r = calcularFtl({ tarifa: tarifaBA, veiculo: 'VAN', distanciaKm: '1.962' });
-    expect(r.distanciaKm.toString()).toBe('1.962');
+    const r = calcularFtl({ tarifa: tarifaBA, veiculo: 'VAN', distanciaKm: '30.5' });
+    expect(r.distanciaKm.toString()).toBe('30.5');
     expect(
       calcularFtl({
         tarifa: tarifaBA,
@@ -35,13 +35,13 @@ describe('calcularFtl', () => {
   });
 
   it('distância fracionada e arredondamento meio para cima', () => {
-    // 100,5 × 3,40 = 341,70 ; 0,5 × 2,11 = 1,055 → 1,06
+    // 100,5 × 3,40 = 341,70 ; 25,5 × 2,11 = 53,805 → 53,81
     expect(
       f2(calcularFtl({ tarifa: tarifaBA, veiculo: 'TRES_QUARTOS', distanciaKm: '100,5' }).total),
     ).toBe('341.70');
     const t = { ...tarifaBA, tarifaKm: { ...tarifaBA.tarifaKm, UTILITARIO: '2.11' } };
-    expect(f2(calcularFtl({ tarifa: t, veiculo: 'UTILITARIO', distanciaKm: '0,5' }).total)).toBe(
-      '1.06',
+    expect(f2(calcularFtl({ tarifa: t, veiculo: 'UTILITARIO', distanciaKm: '25,5' }).total)).toBe(
+      '53.81',
     );
   });
 
@@ -64,18 +64,26 @@ describe('calcularFtl', () => {
     expect(() => calcularFtl({ tarifa: tarifaBA, veiculo: 'VAN', distanciaKm: '' })).toThrow(
       'Distância (km) é obrigatório.',
     );
+    // Mínimo de 25 km: abaixo bloqueia; exatamente 25 é aceito
+    expect(() => calcularFtl({ tarifa: tarifaBA, veiculo: 'VAN', distanciaKm: '24,99' })).toThrow(
+      'KM da rota: mínimo 25 km.',
+    );
+    expect(KM_MINIMO_FTL).toBe(25);
+    expect(f2(calcularFtl({ tarifa: tarifaBA, veiculo: 'VAN', distanciaKm: 25 }).total)).toBe(
+      '71.25',
+    );
     expect(() =>
-      calcularFtl({ tarifa: { ...tarifaBA, adValoremPct: '-1' }, veiculo: 'VAN', distanciaKm: 1 }),
+      calcularFtl({ tarifa: { ...tarifaBA, adValoremPct: '-1' }, veiculo: 'VAN', distanciaKm: 30 }),
     ).toThrow('Ad valorem (%) não pode ser negativo.');
     expect(() =>
       calcularFtl({
         tarifa: { ...tarifaBA, tarifaKm: { ...tarifaBA.tarifaKm, VAN: '-1' } },
         veiculo: 'VAN',
-        distanciaKm: 1,
+        distanciaKm: 30,
       }),
     ).toThrow('Tarifa/km (VAN) não pode ser negativo.');
     expect(() =>
-      calcularFtl({ tarifa: tarifaBA, veiculo: 'CARRETA' as never, distanciaKm: 1 }),
+      calcularFtl({ tarifa: tarifaBA, veiculo: 'CARRETA' as never, distanciaKm: 30 }),
     ).toThrow('Veículo desconhecido');
   });
 });

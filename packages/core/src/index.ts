@@ -45,5 +45,5 @@ export type {
   ConsultaRota,
   OpcaoRota,
 } from './tarifa-aerea.js';
-export { calcularFtl, VEICULOS_FTL, ROTULO_VEICULO } from './ftl.js';
+export { calcularFtl, KM_MINIMO_FTL, VEICULOS_FTL, ROTULO_VEICULO } from './ftl.js';
 export type { VeiculoFtl, TipoLocalidade, TarifaFtl, EntradaFtl, ResultadoFtl } from './ftl.js';

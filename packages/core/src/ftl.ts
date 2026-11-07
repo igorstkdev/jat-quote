@@ -1,4 +1,5 @@
 import { calcularAdValorem, type AdValoremInformativo } from './ad-valorem.js';
+import { ErroValidacao } from './erros.js';
 import { D, roundMoney, type Dec, type DecimalInput } from './money.js';
 import { numeroNaoNegativo, type Entrada } from './numeros.js';
 
@@ -15,6 +16,9 @@ export const ROTULO_VEICULO: Readonly<Record<VeiculoFtl, string>> = Object.freez
 });
 
 export type TipoLocalidade = 'CAPITAL' | 'INTERIOR';
+
+/** Distância mínima da rota FTL: abaixo disso o sistema bloqueia (confirmado em 07/11/2026). */
+export const KM_MINIMO_FTL = 25;
 
 /** Linha da tabela FTL Fiat (CLAUDE.md §3.4). */
 export interface TarifaFtl {
@@ -58,6 +62,9 @@ export function calcularFtl(entrada: EntradaFtl): ResultadoFtl {
     rotulo: 'Distância (km)',
     permiteZero: false,
   });
+  if (distanciaKm.lessThan(KM_MINIMO_FTL)) {
+    throw new ErroValidacao('distanciaKm', `KM da rota: mínimo ${KM_MINIMO_FTL} km.`);
+  }
   const tarifaKm = numeroNaoNegativo(tarifaKmBruta, {
     campo: 'tarifaKm',
     rotulo: `Tarifa/km (${ROTULO_VEICULO[veiculo]})`,
