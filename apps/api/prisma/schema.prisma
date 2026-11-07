@@ -1,16 +1,157 @@
-// JAT Quote — modelo de dados.
-// Fase 0: apenas a tabela de configurações. O modelo completo entra na Fase 2.
+// JAT Quote — modelo de dados (Fase 2: modelo completo).
+// Convenção: nomes em inglês no código, tabelas/colunas em snake_case no banco.
+// Dinheiro: Decimal(14,2). Percentuais: Decimal(9,4). Tarifas por kg/km: Decimal(12,4).
 
 generator client {
-  provider               = "prisma-client"
-  output                 = "../src/generated/prisma"
-  runtime                = "nodejs"
-  moduleFormat           = "esm"
-  importFileExtension    = "js"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  runtime             = "nodejs"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ───────────────────────── Enums ─────────────────────────
+
+enum Role {
+  ADMIN
+  OPERACIONAL
+}
+
+/// Modal da cotação. FTL = FTL Fiat.
+enum Modal {
+  AEREO
+  RODOVIARIO
+  FTL
+}
+
+enum QuoteStatus {
+  PENDENTE
+  APROVADA
+  DECLINADA
+  RECUSADA
+}
+
+enum Airline {
+  GOL
+  AZUL
+  LATAM
+}
+
+enum Locality {
+  CAPITAL
+  INTERIOR
+}
+
+enum FtlVehicle {
+  UTILITARIO
+  VAN
+  TRES_QUARTOS
+}
+
+// ───────────────────────── Acesso ─────────────────────────
+
+model User {
+  id                 String    @id @default(uuid()) @db.Uuid
+  /// Sempre em minúsculas.
+  username           String    @unique
+  name               String
+  passwordHash       String    @map("password_hash")
+  role               Role      @default(OPERACIONAL)
+  /// Permissão "Pode editar tarifas" (CLAUDE.md §3.9).
+  canEditRates       Boolean   @default(false) @map("can_edit_rates")
+  active             Boolean   @default(true)
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  failedLoginCount   Int       @default(0) @map("failed_login_count")
+  lockedUntil        DateTime? @map("locked_until")
+  lastLoginAt        DateTime? @map("last_login_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  quotesCreated Quote[]             @relation("QuoteCreatedBy")
+  quotesUpdated Quote[]             @relation("QuoteUpdatedBy")
+  quotesDeleted Quote[]             @relation("QuoteDeletedBy")
+  statusChanges QuoteStatusChange[]
+
+  @@map("users")
+}
+
+model Session {
+  /// SHA-256 do token do cookie (o token em si nunca é gravado).
+  id         String   @id
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  expiresAt  DateTime @map("expires_at")
+  ip         String?
+  userAgent  String?  @map("user_agent")
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id        BigInt   @id @default(autoincrement())
+  at        DateTime @default(now())
+  userId    String?  @map("user_id") @db.Uuid
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /// Cópia do usuário no momento do evento (o histórico não depende do cadastro).
+  username  String?
+  /// Ex.: LOGIN, LOGIN_FALHOU, LOGOUT, CRIAR, EDITAR, EXCLUIR, DESATIVAR, REATIVAR, SENHA_REDEFINIDA...
+  action    String
+  /// Ex.: usuario, cliente, cotacao, tarifa_aerea, tabela_ftl, configuracao, link.
+  entity    String
+  entityId  String?  @map("entity_id")
+  /// Campos alterados: { campo: { de, para } } ou dados relevantes do evento.
+  details   Json?
+  ip        String?
+  userAgent String?  @map("user_agent")
+
+  @@index([at])
+  @@index([entity, entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// ───────────────────────── Cadastros ─────────────────────────
+
+model Client {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  /// CNPJ ou CPF (só dígitos).
+  document  String?
+  contact   String?
+  email     String?
+  phone     String?
+  notes     String?
+  /// Exclusão = desativação (soft delete, CLAUDE.md §3.8).
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  quotes Quote[]
+
+  @@index([name])
+  @@map("clients")
+}
+
+model UsefulLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  url       String
+  sortOrder Int      @default(0) @map("sort_order")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("useful_links")
 }
 
 /// Configurações do sistema (chave → valor JSON), editáveis pelo Admin.
@@ -20,4 +161,165 @@ model Setting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("settings")
+}
+
+// ───────────────────────── Cotações ─────────────────────────
+
+model Quote {
+  id         String      @id @default(uuid()) @db.Uuid
+  /// Número sequencial legível (JQ-000123), único para Spot e FTL.
+  number     Int         @unique @default(autoincrement())
+  modal      Modal
+  status     QuoteStatus @default(PENDENTE)
+  clientId   String?     @map("client_id") @db.Uuid
+  client     Client?     @relation(fields: [clientId], references: [id])
+  /// Cópia do nome do cliente na data da cotação.
+  clientName String?     @map("client_name")
+  originCity String?     @map("origin_city")
+  originUf   String?     @map("origin_uf") @db.Char(2)
+  destCity   String?     @map("dest_city")
+  destUf     String?     @map("dest_uf") @db.Char(2)
+
+  // Spot
+  costRoad     Decimal? @map("cost_road") @db.Decimal(14, 2)
+  costPickup   Decimal? @map("cost_pickup") @db.Decimal(14, 2)
+  costAir      Decimal? @map("cost_air") @db.Decimal(14, 2)
+  costDelivery Decimal? @map("cost_delivery") @db.Decimal(14, 2)
+  toll         Decimal  @default(0) @db.Decimal(14, 2)
+  markupPct    Decimal  @default(0) @map("markup_pct") @db.Decimal(9, 4)
+
+  // FTL
+  ftlRateId      String?     @map("ftl_rate_id") @db.Uuid
+  ftlRate        FtlRate?    @relation(fields: [ftlRateId], references: [id])
+  ftlRateVersion Int?        @map("ftl_rate_version")
+  ftlLocality    Locality?   @map("ftl_locality")
+  vehicle        FtlVehicle?
+  distanceKm     Decimal?    @map("distance_km") @db.Decimal(10, 2)
+  ratePerKm      Decimal?    @map("rate_per_km") @db.Decimal(12, 4)
+
+  // Comum (valores gravados já arredondados — CLAUDE.md §4)
+  adValoremPct Decimal  @map("ad_valorem_pct") @db.Decimal(9, 4)
+  goodsValue   Decimal? @map("goods_value") @db.Decimal(14, 2)
+  costTotal    Decimal  @map("cost_total") @db.Decimal(14, 2)
+  markupTotal  Decimal  @default(0) @map("markup_total") @db.Decimal(14, 2)
+  subtotal     Decimal  @db.Decimal(14, 2)
+  total        Decimal  @db.Decimal(14, 2)
+  notes        String?
+
+  createdById      String    @map("created_by_id") @db.Uuid
+  createdBy        User      @relation("QuoteCreatedBy", fields: [createdById], references: [id])
+  updatedById      String?   @map("updated_by_id") @db.Uuid
+  updatedBy        User?     @relation("QuoteUpdatedBy", fields: [updatedById], references: [id])
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  /// Exclusão = soft delete (somente Admin).
+  deletedAt        DateTime? @map("deleted_at")
+  deletedById      String?   @map("deleted_by_id") @db.Uuid
+  deletedBy        User?     @relation("QuoteDeletedBy", fields: [deletedById], references: [id])
+  /// Cotação de origem quando criada por "Duplicar como nova".
+  duplicatedFromId String?   @map("duplicated_from_id") @db.Uuid
+
+  statusChanges QuoteStatusChange[]
+
+  @@index([createdAt])
+  @@index([status])
+  @@index([modal])
+  @@index([clientId])
+  @@map("quotes")
+}
+
+model QuoteStatusChange {
+  id         String       @id @default(uuid()) @db.Uuid
+  quoteId    String       @map("quote_id") @db.Uuid
+  quote      Quote        @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  fromStatus QuoteStatus? @map("from_status")
+  toStatus   QuoteStatus  @map("to_status")
+  userId     String       @map("user_id") @db.Uuid
+  user       User         @relation(fields: [userId], references: [id])
+  note       String?
+  at         DateTime     @default(now())
+
+  @@index([quoteId])
+  @@map("quote_status_changes")
+}
+
+// ───────────────────────── Tarifas ─────────────────────────
+
+model AirRate {
+  id          String    @id @default(uuid()) @db.Uuid
+  origin      String    @db.Char(3)
+  destination String    @db.Char(3)
+  airline     Airline
+  validFrom   DateTime  @map("valid_from") @db.Date
+  validTo     DateTime? @map("valid_to") @db.Date
+  active      Boolean   @default(true)
+  version     Int       @default(1)
+
+  // Os 3 níveis são opcionais (CLAUDE.md §3.3)
+  urgentPerKg  Decimal? @map("urgent_per_kg") @db.Decimal(12, 4)
+  urgentMin    Decimal? @map("urgent_min") @db.Decimal(14, 2)
+  fastPerKg    Decimal? @map("fast_per_kg") @db.Decimal(12, 4)
+  fastMin      Decimal? @map("fast_min") @db.Decimal(14, 2)
+  economyPerKg Decimal? @map("economy_per_kg") @db.Decimal(12, 4)
+  economyMin   Decimal? @map("economy_min") @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  history AirRateHistory[]
+
+  @@index([origin, destination, airline])
+  @@map("air_rates")
+}
+
+model AirRateHistory {
+  id        String   @id @default(uuid()) @db.Uuid
+  airRateId String   @map("air_rate_id") @db.Uuid
+  airRate   AirRate  @relation(fields: [airRateId], references: [id], onDelete: Cascade)
+  version   Int
+  /// Cópia completa da tarifa nesta versão.
+  snapshot  Json
+  action    String
+  userId    String?  @map("user_id") @db.Uuid
+  username  String?
+  at        DateTime @default(now())
+
+  @@index([airRateId])
+  @@map("air_rate_history")
+}
+
+model FtlRate {
+  id           String   @id @default(uuid()) @db.Uuid
+  uf           String   @db.Char(2)
+  region       String
+  locality     Locality
+  perKmUtility Decimal  @map("per_km_utility") @db.Decimal(12, 4)
+  perKmVan     Decimal  @map("per_km_van") @db.Decimal(12, 4)
+  perKm15t     Decimal  @map("per_km_15t") @db.Decimal(12, 4)
+  adValoremPct Decimal  @map("ad_valorem_pct") @db.Decimal(9, 4)
+  active       Boolean  @default(true)
+  version      Int      @default(1)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  history FtlRateHistory[]
+  quotes  Quote[]
+
+  @@index([uf, locality])
+  @@map("ftl_rates")
+}
+
+model FtlRateHistory {
+  id        String   @id @default(uuid()) @db.Uuid
+  ftlRateId String   @map("ftl_rate_id") @db.Uuid
+  ftlRate   FtlRate  @relation(fields: [ftlRateId], references: [id], onDelete: Cascade)
+  version   Int
+  snapshot  Json
+  action    String
+  userId    String?  @map("user_id") @db.Uuid
+  username  String?
+  at        DateTime @default(now())
+
+  @@index([ftlRateId])
+  @@map("ftl_rate_history")
 }

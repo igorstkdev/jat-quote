@@ -24,7 +24,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "db:migrate": "npm run db:migrate -w @jat/api",
     "db:generate": "npm run db:generate -w @jat/api",
-    "test:core": "npm run test:coverage -w @jat/core"
+    "test:core": "npm run test:coverage -w @jat/core",
+    "db:seed": "npm run db:seed -w @jat/api"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -46,6 +47,7 @@
   "allowScripts": {
     "esbuild@0.28.2": true,
     "prisma@7.10.1": true,
-    "@prisma/engines@7.10.1": true
+    "@prisma/engines@7.10.1": true,
+    "argon2@0.45.2": true
   }
 }

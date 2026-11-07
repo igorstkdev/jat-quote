@@ -4,7 +4,13 @@ import { loadEnv } from './env.js';
 
 const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
-const app = await buildApp({ db, logger: { level: env.LOG_LEVEL } });
+const app = await buildApp({
+  db,
+  logger: { level: env.LOG_LEVEL },
+  sessionTtlHours: env.SESSION_TTL_HOURS,
+  cookieSecure: env.COOKIE_SECURE,
+  trustProxy: env.TRUST_PROXY,
+});
 
 async function shutdown(signal: string) {
   app.log.info(`Recebido ${signal}, encerrando...`);
