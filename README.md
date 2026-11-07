@@ -66,6 +66,7 @@ scripts         Scripts de apoio (criação do banco, backup)
 | `npm run build`     | Compila core, API e site                                               |
 | `npm run start`     | Produção: API + site na mesma porta (`PORT`, padrão 3333)              |
 | `npm test`          | Testes unitários e de integração (Vitest), usa o banco de teste        |
+| `npm run test:core` | Testes do núcleo de cálculo com cobertura (exige 100%)                 |
 | `npm run test:e2e`  | Testes ponta a ponta + screenshots em `e2e/screenshots/`               |
 | `npm run lint`      | ESLint                                                                 |
 | `npm run typecheck` | Checagem de tipos de todos os pacotes                                  |

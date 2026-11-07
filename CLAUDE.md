@@ -44,6 +44,7 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
   - O markup é exibido também por componente: `Componente × (1 + Markup%/100)`.
   - O painel de resultado mostra: Total do Frete (destaque), "MKUP Total Aplicado" (= Subtotal − SomaDosCustos), "Subtotal com MKUP", Pedágio, "Total Final" e um expansor "Detalhar Custos com MKUP" (por componente).
   - Exemplos reais do app atual: Rodoviário 350 + pedágio 150, markup 70% → MKUP 245, subtotal 595, total **745,00**. Aéreo 300 + 600 + 150, pedágio 150, markup 70% → MKUP 735, subtotal 1.785, total **1.935,00**.
+- **Markup negativo não é permitido** (confirmado em 07/11/2026): erro "O markup não pode ser negativo." Custos e pedágio também não aceitam negativos; campo vazio vale 0.
 - **Ad valorem é APENAS INFORMATIVO**: não entra em nenhuma soma (total, dashboard, relatórios, Excel). Padrão **por modal: Aéreo 0,47% e Rodoviário 0,15%** (padrões configuráveis pelo Admin), editável por cotação; campo em branco = usa o padrão do modal. Aparece no PDF e no texto copiado como condição comercial: _"Ad valorem de X% sobre o valor da nota fiscal, cobrado adicionalmente."_
 - Campo opcional "Valor estimado da mercadoria": se preenchido, mostra a estimativa do ad valorem como informativa, fora do total.
 - Ações: Salvar (status inicial "Pendente"), Editar, Limpar, PDF, Copiar (texto formatado para WhatsApp/e-mail), Enviar e-mail (`mailto:` com assunto e corpo preenchidos).
@@ -61,12 +62,14 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - **Quantidade por volume** (novo; o app atual não tem): peso bruto informado **por unidade**; taxado da linha = `MAX(bruto, cubado)` por unidade × quantidade.
 - **Modo de cálculo do taxado total** (configuração): "por volume" = Σ dos taxados de cada linha; "por embarque" = `MAX(Σ bruto, Σ cubado)` (padrão de mercado no aéreo). ⚠️ Padrão ainda NÃO CONFIRMADO: usar "por volume" (comportamento do app atual) até a confirmação.
 - Funcionalidades: múltiplos volumes, adicionar, remover, duplicar, quantidade por volume.
+- Exemplos reais do app atual (rodoviário, 1 volume): 0,4 × 0,3 × 0,3 m, 3 kg → cubado **10,80 kg**, taxado **10,80 kg**; 0,5 × 0,8 × 1,2 m, 200 kg → cubado **144,00 kg**, taxado **200,00 kg**.
+- Pesos exibidos no padrão brasileiro (`10,80 kg`), com 2 casas.
 
 ### 3.3 Tarifas aéreas
 
 - Chave: aeroporto de origem (IATA, 3 letras), aeroporto de destino (IATA) e companhia (GOL | AZUL | LATAM).
 - Níveis: Urgente, Rápido e Econômico, cada um com tarifa/kg e mínimo. **Os 3 níveis são opcionais** por tarifa.
-- `Valor = MAX(Peso × Tarifa/kg, Mínimo)`.
+- `Valor = MAX(Peso × Tarifa/kg, Mínimo)`. O peso é usado **como digitado** (sem arredondar para o kg inteiro), confirmado em 07/11/2026.
 - Calculadora rápida: origem + destino + nível + peso taxado → lista todas as companhias da rota, **ordenadas pelo menor custo**. Botão Limpar; estado vazio "Aguardando cálculo".
 - Gestão: criar com vigência (início/fim), editar (gera histórico automático), ativar/desativar, duplicar, importar/exportar CSV, histórico completo por tarifa.
 - **Vigências sobrepostas são proibidas** (mesma rota + companhia), validado no servidor.
