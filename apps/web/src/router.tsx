@@ -12,6 +12,8 @@ const TrocarSenhaPage = lazy(() => import('@/pages/trocar-senha'));
 const InicioPage = lazy(() => import('@/pages/inicio'));
 const EmBrevePage = lazy(() => import('@/pages/em-breve'));
 const ClientesPage = lazy(() => import('@/pages/clientes'));
+const SpotPage = lazy(() => import('@/pages/spot'));
+const CubagemPage = lazy(() => import('@/pages/cubagem'));
 const MinhaContaPage = lazy(() => import('@/pages/minha-conta'));
 const UsuariosPage = lazy(() => import('@/pages/admin/usuarios'));
 const ConfiguracoesPage = lazy(() => import('@/pages/admin/configuracoes'));
@@ -80,6 +82,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <InicioPage /> },
       ...emBreve,
+      { path: 'spot', element: <SpotPage /> },
+      { path: 'cubagem', element: <CubagemPage /> },
       { path: 'clientes', element: <ClientesPage /> },
       { path: 'minha-conta', element: <MinhaContaPage /> },
       {

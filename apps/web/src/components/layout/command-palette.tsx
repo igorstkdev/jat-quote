@@ -46,6 +46,13 @@ export function CommandPalette({ aberto, onAbertoChange, onAlternarMenu }: Props
         <CommandEmpty>Nada encontrado.</CommandEmpty>
         <CommandGroup heading="Ações">
           <CommandItem
+            value="nova cotação spot frete"
+            onSelect={() => executar(() => navigate('/spot'))}
+          >
+            <Plus />
+            Nova cotação Spot
+          </CommandItem>
+          <CommandItem
             value="novo cliente cadastrar"
             onSelect={() => executar(() => navigate('/clientes?novo=1'))}
           >

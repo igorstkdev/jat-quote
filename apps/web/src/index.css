@@ -44,6 +44,10 @@
 
   --success: var(--status-aprovada);
   --sidebar: oklch(0.975 0.003 264);
+  /* Destaques do resultado da calculadora */
+  --destaque-mkup: oklch(0.5 0.2 280);
+  --destaque-pedagio: oklch(0.55 0.17 45);
+  --total-final: oklch(0.27 0.03 264);
 }
 
 .dark {
@@ -76,6 +80,9 @@
   --status-recusada: oklch(0.66 0.19 25);
   --success: var(--status-aprovada);
   --sidebar: oklch(0.175 0.013 264);
+  --destaque-mkup: oklch(0.76 0.13 280);
+  --destaque-pedagio: oklch(0.78 0.14 55);
+  --total-final: oklch(0.3 0.06 264);
 }
 
 @theme inline {
@@ -109,6 +116,9 @@
   --color-brand-accent: var(--brand-accent);
   --color-success: var(--success);
   --color-sidebar: var(--sidebar);
+  --color-destaque-mkup: var(--destaque-mkup);
+  --color-destaque-pedagio: var(--destaque-pedagio);
+  --color-total-final: var(--total-final);
   --color-status-pendente: var(--status-pendente);
   --color-status-aprovada: var(--status-aprovada);
   --color-status-declinada: var(--status-declinada);

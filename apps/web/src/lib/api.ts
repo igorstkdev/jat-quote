@@ -122,3 +122,38 @@ export interface RegistroAuditoria {
   details: unknown;
   ip: string | null;
 }
+
+export type StatusCotacao = 'PENDENTE' | 'APROVADA' | 'DECLINADA' | 'RECUSADA';
+export type ComponenteSpot = 'RODOVIARIO' | 'COLETA' | 'AEREO' | 'ENTREGA';
+
+export interface Cotacao {
+  id: string;
+  number: number;
+  code: string;
+  modal: 'AEREO' | 'RODOVIARIO' | 'FTL';
+  status: StatusCotacao;
+  clientId: string | null;
+  clientName: string | null;
+  clientEmail: string | null;
+  origin: string | null;
+  originCity: string | null;
+  originUf: string | null;
+  dest: string | null;
+  destCity: string | null;
+  destUf: string | null;
+  costs: Record<ComponenteSpot, string | null>;
+  toll: string;
+  markupPct: string;
+  adValoremPct: string;
+  goodsValue: string | null;
+  costTotal: string;
+  markupTotal: string;
+  subtotal: string;
+  total: string;
+  notes: string | null;
+  duplicatedFromId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: { name: string; username: string } | null;
+  updatedBy: { name: string; username: string } | null;
+}

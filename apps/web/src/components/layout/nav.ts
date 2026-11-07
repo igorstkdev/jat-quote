@@ -42,8 +42,6 @@ export const NAV: GrupoNav[] = [
         rotulo: 'Frete Spot',
         icone: Calculator,
         palavras: 'cotação calculadora aéreo rodoviário',
-        emBreve: true,
-        fase: 3,
         descricao: 'Cotação de frete aéreo e rodoviário com markup, pedágio e ad valorem.',
       },
       {
@@ -51,8 +49,6 @@ export const NAV: GrupoNav[] = [
         rotulo: 'Cubagem',
         icone: Package,
         palavras: 'peso cubado taxado volumes',
-        emBreve: true,
-        fase: 3,
         descricao: 'Peso cubado e peso taxado de vários volumes, aéreo e rodoviário.',
       },
       {

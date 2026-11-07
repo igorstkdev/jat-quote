@@ -77,7 +77,15 @@ const CSS = `
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   td { padding: 2mm 0; }
   td.v { text-align: right; white-space: nowrap; }
-  .comp { border: 1px solid #e2e8f0; border-radius: 3mm; padding: 3mm 4mm; margin-bottom: 3mm; }
+  .comps { display: grid; gap: 3mm; }
+  .comps.n3 { grid-template-columns: repeat(3, 1fr); font-size: 9.5pt; }
+  .comps.n3 td.v { padding-left: 2mm; }
+  .comp { border: 1px solid #e2e8f0; border-radius: 3mm; padding: 3mm 3.5mm; }
+  .grade.compacta { grid-template-columns: 2fr 1fr 1fr; margin-top: 6mm; }
+  .grade.compacta .largo { grid-column: span 3; }
+  .total.menor { margin-top: 6mm; padding: 5mm 7mm; }
+  .total.menor .val { font-size: 22pt; }
+  .op h2 { margin: 6mm 0 2.5mm; }
   .comp .nome { font-weight: 700; text-transform: uppercase; font-size: 9.5pt; letter-spacing: .05em; color: #1F428A; }
   .comp td { padding: 1mm 0; color: #334155; }
   .comp tr.t td { color: #0f172a; font-weight: 700; border-top: 1px dashed #cbd5e1; padding-top: 1.5mm; }
@@ -116,6 +124,17 @@ function infos(d: DadosPdf, extras = '') {
     </div>`;
 }
 
+function infosCompactas(d: DadosPdf) {
+  return `
+    <div class="grade compacta">
+      <div class="campo largo"><div class="rot">Cliente</div><div class="val">${esc(d.cliente)}</div></div>
+      <div class="campo"><div class="rot">Rota</div>
+        <div class="val rota">${esc(d.origem)} <span class="seta">→</span> ${esc(d.destino)}</div></div>
+      <div class="campo"><div class="rot">Modal</div><div class="val">${esc(ROTULO_MODAL[d.modal])}</div></div>
+      <div class="campo"><div class="rot">Criada por</div><div class="val">${esc(d.criadaPor)}</div></div>
+    </div>`;
+}
+
 function documento(corpo: string) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>${CSS}</style></head>
     <body><div class="pagina">${corpo}</div></body></html>`;
@@ -135,6 +154,7 @@ export function htmlCotacaoCliente(d: DadosPdf): string {
       <li>Validade da cotação: ${VALIDADE_COTACAO_DIAS} dias, até ${validade}.</li>
     </ul>
     ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}
+    </div>
     ${rodape(d)}
   `);
 }
@@ -160,16 +180,17 @@ export function htmlCotacaoOperacao(d: DadosPdf): string {
     ? ` Estimativa sobre ${formatBRL(r.adValorem.valorMercadoria!)}: ${formatBRL(r.adValorem.estimativa)} (fora do total).`
     : '';
   return documento(`
+    <div class="op">
     ${cabecalho(d, 'Cotação de frete', 'VISÃO OPERAÇÃO · USO INTERNO')}
-    ${infos(d, `<div class="campo"><div class="rot">Criada por</div><div class="val">${esc(d.criadaPor)}</div></div>`)}
+    ${infosCompactas(d)}
     <h2>Detalhamento dos custos (MKUP individual)</h2>
-    ${comps}
+    <div class="comps ${r.componentes.length === 3 ? 'n3' : ''}">${comps}</div>
     <table class="resumo">
       <tr class="mk"><td>MKUP total aplicado</td><td class="v">${formatBRL(r.markupTotal)}</td></tr>
       <tr><td>Subtotal com MKUP</td><td class="v">${formatBRL(r.subtotal)}</td></tr>
       <tr><td>Pedágio</td><td class="v">${formatBRL(r.pedagio)}</td></tr>
     </table>
-    <div class="total"><div class="rot">Total do frete</div><div class="val">${formatBRL(r.total)}</div></div>
+    <div class="total menor"><div class="rot">Total do frete</div><div class="val">${formatBRL(r.total)}</div></div>
     <h2>Ad valorem (informativo)</h2>
     <ul class="cond"><li>${esc(r.adValorem.condicao)}${esc(est)}</li></ul>
     ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}

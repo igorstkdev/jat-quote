@@ -88,6 +88,23 @@ scripts         Scripts de apoio (criação do banco, backup)
 Em produção, com `HOST=0.0.0.0`, os operadores acessam pela rede em `http://<servidor>:<PORT>`.
 A execução como serviço do Windows é configurada na Fase 6.
 
+## Cotações (Fase 3)
+
+- **Frete Spot** (`/spot`): resultado em tempo real; o servidor recalcula tudo ao salvar. Atalhos:
+  **Ctrl+S** salvar, **Ctrl+Shift+C** copiar o texto, **Ctrl+P** PDF para o cliente.
+- **PDF**: duas versões, _para o cliente_ (sem custos internos, validade de 30 dias) e _da operação_
+  (detalhamento com MKUP, como o app antigo). O PDF é gerado no servidor com o Chromium, que precisa
+  estar instalado na máquina do servidor:
+
+  ```bash
+  npx playwright install chromium
+  ```
+
+- **Cidades**: lista oficial do IBGE embutida no sistema. Para atualizar:
+  `node scripts/gerar-municipios.mjs`.
+- **Cubagem** (`/cubagem`): peso taxado total = maior entre a soma dos pesos brutos e a soma dos cubados.
+- Os formulários guardam um rascunho no navegador, separado por usuário.
+
 ## Acesso e segurança
 
 - Login por usuário e senha (argon2id). A sessão expira após **12 horas sem uso** (`SESSION_TTL_HOURS`).
