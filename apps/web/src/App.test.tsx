@@ -71,3 +71,13 @@ describe('App (Fase 0)', () => {
     expect(document.documentElement).not.toHaveClass('dark');
   });
 });
+
+describe('App sem API', () => {
+  it('explica em português quando a API não responde (502 do proxy)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 502 })));
+    renderApp();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'A API não está respondendo. Verifique se o servidor está ligado.',
+    );
+  });
+});

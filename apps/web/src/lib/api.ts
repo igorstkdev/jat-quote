@@ -17,6 +17,12 @@ export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
   }
   const body = (await res.json().catch(() => null)) as { message?: string } | null;
   if (!res.ok) {
+    if (!body?.message && [502, 503, 504].includes(res.status)) {
+      throw new ApiError(
+        'A API não está respondendo. Verifique se o servidor está ligado.',
+        res.status,
+      );
+    }
     throw new ApiError(body?.message ?? `Erro ${res.status} no servidor.`, res.status);
   }
   return body as T;

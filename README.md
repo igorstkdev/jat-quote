@@ -71,6 +71,10 @@ scripts         Scripts de apoio (criação do banco, backup)
 | `npm run typecheck` | Checagem de tipos de todos os pacotes                                  |
 | `npm run format`    | Prettier                                                               |
 
+> **Windows PowerShell:** se aparecer "a execução de scripts foi desabilitada neste sistema" ao
+> rodar `npm`, use `npm.cmd` no lugar (ex.: `npm.cmd run dev`) ou rode os comandos no Prompt de
+> Comando (cmd).
+
 Em produção, com `HOST=0.0.0.0`, os operadores acessam pela rede em `http://<servidor>:<PORT>`.
 A execução como serviço do Windows é configurada na Fase 6.
 
