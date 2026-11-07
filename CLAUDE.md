@@ -86,7 +86,7 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - **KM da rota mínimo 25 km**: abaixo disso o sistema **bloqueia** com a mensagem "KM da rota: mínimo 25 km." (confirmado em 07/11/2026).
 - **Condições comerciais do FTL**: texto padrão editável pelo Admin em uma área dedicada de configurações (não na tela da calculadora); aparece no resultado, no PDF, no "Copiar" e no e-mail.
 - Módulo com 3 abas (referência do app atual):
-  - **Calculadora**: UF destino, Tipo de localidade, Tipo de veículo, KM da rota (com link "Consulte a quilometragem no Qualp"), Observações. Resultado: Valor do Frete (destaque) com UF/localidade/veículo, Tarifa por KM, KM da rota, Ad valorem, e o bloco de **condições comerciais** (texto padrão). Ações: Salvar cotação, Limpar, Copiar, Enviar e-mail.
+  - **Calculadora**: UF destino, Tipo de localidade, Tipo de veículo, KM da rota (com link "Consulte a quilometragem no Qualp", https://qualp.com.br/#/), Observações. Resultado: Valor do Frete (destaque) com UF/localidade/veículo, Tarifa por KM, KM da rota, Ad valorem, e o bloco de **condições comerciais** (texto padrão). Ações: Salvar cotação, Limpar, Copiar, Enviar e-mail.
   - **Tabelas de Preço** (submódulo de cadastro, pré-requisito da calculadora): busca por UF ou região, filtro de status, colunas UF, Região, Tipo, VAN, Utilitário, 1,5T, Ad valorem, Status, Versão, Ações; botões Importar CSV, Exportar CSV, Nova Tabela e "Excluir Tudo" (somente Admin, confirmação forte).
   - **Relatório**: histórico de cotações FTL com status.
 - A calculadora usa a tabela **ativa** de UF + Tipo de localidade. Edição gera nova versão (histórico).
@@ -127,7 +127,7 @@ Pendente (azul), Aprovada (verde), Declinada (laranja: cliente recusou por preç
 
 ### 3.10 Links úteis
 
-Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Quelp, Google Maps, WebRouter, JAT Transportes.
+Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp (https://qualp.com.br/#/), Google Maps, WebRouter, JAT Transportes.
 
 ## 4. Padrões de qualidade
 
