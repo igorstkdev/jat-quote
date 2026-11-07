@@ -24,7 +24,7 @@ const pequeno: VolumeEntrada = {
 describe('calcularCubagem — fatores e padrão', () => {
   it('fatores: aéreo 166,667 e rodoviário 300', () => {
     expect(FATOR_CUBAGEM).toEqual({ AEREO: '166.667', RODOVIARIO: '300' });
-    expect(MODO_TAXADO_PADRAO).toBe('POR_VOLUME');
+    expect(MODO_TAXADO_PADRAO).toBe('POR_EMBARQUE');
   });
 
   it('fatores configurados', () => {
@@ -45,7 +45,11 @@ describe('calcularCubagem — fatores e padrão', () => {
 
 describe('calcularCubagem — dois modos de taxado total', () => {
   it('POR_VOLUME: Σ MAX por linha = 200 + 10,8 = 210,80', () => {
-    const r = calcularCubagem({ modal: 'RODOVIARIO', volumes: [grande, pequeno] });
+    const r = calcularCubagem({
+      modal: 'RODOVIARIO',
+      modo: 'POR_VOLUME',
+      volumes: [grande, pequeno],
+    });
     expect(r.modo).toBe('POR_VOLUME');
     expect(f2(r.pesoBrutoTotal)).toBe('203.00');
     expect(f2(r.pesoCubadoTotal)).toBe('154.80');

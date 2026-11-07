@@ -45,7 +45,7 @@ export interface ResultadoFtl {
 
 /**
  * Frete FTL Fiat (CLAUDE.md §3.4).
- * ⚠️ Pedágio e markup no FTL ainda não confirmados: não implementados.
+ * Sem pedágio e sem markup (confirmado em 07/11/2026 com o app atual).
  */
 export function calcularFtl(entrada: EntradaFtl): ResultadoFtl {
   const { tarifa, veiculo } = entrada;

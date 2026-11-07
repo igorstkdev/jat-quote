@@ -60,7 +60,8 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - Por volume: `PesoCubado = C × L × A × Fator`; `PesoTaxado = MAX(PesoBruto, PesoCubado)`.
 - Totais: somas de peso bruto, peso cubado e peso taxado.
 - **Quantidade por volume** (novo; o app atual não tem): peso bruto informado **por unidade**; taxado da linha = `MAX(bruto, cubado)` por unidade × quantidade.
-- **Modo de cálculo do taxado total** (configuração): "por volume" = Σ dos taxados de cada linha; "por embarque" = `MAX(Σ bruto, Σ cubado)` (padrão de mercado no aéreo). ⚠️ Padrão ainda NÃO CONFIRMADO: usar "por volume" (comportamento do app atual) até a confirmação.
+- **Peso Taxado Total = "por embarque" = `MAX(Σ bruto, Σ cubado)`** (confirmado em 07/11/2026 com o app atual, nos dois modais). O detalhe de cada volume continua mostrando o taxado da linha. O modo "por volume" (Σ dos taxados das linhas) existe no core como configuração, mas não é o padrão.
+- Exemplos reais com vários volumes: rodoviário 0,5×0,8×1,2 m 200 kg + 0,2×0,4×0,45 m 3 kg → bruto **203,00**, cubado **154,80**, taxado **203,00**. Aéreo, os mesmos + 0,5×0,45×0,45 m 4 kg → cubados 80,00 / 6,00 / **16,88**, bruto **207,00**, cubado **102,88**, taxado **207,00**.
 - Funcionalidades: múltiplos volumes, adicionar, remover, duplicar, quantidade por volume.
 - Exemplos reais do app atual (rodoviário, 1 volume): 0,4 × 0,3 × 0,3 m, 3 kg → cubado **10,80 kg**, taxado **10,80 kg**; 0,5 × 0,8 × 1,2 m, 200 kg → cubado **144,00 kg**, taxado **200,00 kg**.
 - Pesos exibidos no padrão brasileiro (`10,80 kg`), com 2 casas.
@@ -80,7 +81,14 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - Tabela: UF destino, Região, Tipo de localidade (Capital | Interior), R$/km para Utilitário, VAN e 1.5T, e Ad valorem %.
 - `Frete = Distância (km) × Tarifa/km do veículo`. Ad valorem informativo, fora do total.
 - Distância em km **digitada pelo operador** na v1 (Google Maps automático fica para versão futura).
-- ⚠️ Pedágio e markup no FTL: NÃO CONFIRMADO. Pergunte antes de implementar.
+- **Sem pedágio e sem markup no FTL** (confirmado em 07/11/2026 com o app atual).
+- Exemplo real: SP Capital, VAN R$ 3,60/km, 300 km → **R$ 1.080,00**; ad valorem 0,5% (da tabela), informativo.
+- ⚠️ "KM da Rota (mínimo 25 km)": NÃO CONFIRMADO se abaixo de 25 km o sistema bloqueia ou cobra 25 km. Pergunte antes de implementar.
+- Módulo com 3 abas (referência do app atual):
+  - **Calculadora**: UF destino, Tipo de localidade, Tipo de veículo, KM da rota (com link "Consulte a quilometragem no Qualp"), Observações. Resultado: Valor do Frete (destaque) com UF/localidade/veículo, Tarifa por KM, KM da rota, Ad valorem, e o bloco de **condições comerciais** (texto padrão). Ações: Salvar cotação, Limpar, Copiar, Enviar e-mail.
+  - **Tabelas de Preço** (submódulo de cadastro, pré-requisito da calculadora): busca por UF ou região, filtro de status, colunas UF, Região, Tipo, VAN, Utilitário, 1,5T, Ad valorem, Status, Versão, Ações; botões Importar CSV, Exportar CSV, Nova Tabela e "Excluir Tudo" (somente Admin, confirmação forte).
+  - **Relatório**: histórico de cotações FTL com status.
+- A calculadora usa a tabela **ativa** de UF + Tipo de localidade. Edição gera nova versão (histórico).
 - CRUD, histórico de alterações, importar/exportar CSV, histórico de cotações FTL com status.
 
 ### 3.5 Status das cotações
@@ -130,6 +138,9 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Quelp
   - Tarifa aérea: peso × tarifa abaixo do mínimo → cobra o mínimo.
   - Rodoviário (app atual): custo 350, markup 70%, pedágio 150 → MKUP **245,00**, subtotal **595,00**, total **745,00**.
   - Aéreo (app atual): coleta 300, aéreo 600, entrega 150, markup 70%, pedágio 150 → MKUP **735,00**, subtotal **1.785,00**, total **1.935,00**.
+  - Cubagem vários volumes (app atual): rodoviário taxado **203,00 kg**; aéreo 3 volumes taxado **207,00 kg**, cubado **102,88 kg** (ver §3.2).
+  - FTL (app atual): VAN R$ 3,60/km × 300 km → **R$ 1.080,00**.
+  - Todos estão em `packages/core/src/golden.test.ts`.
 - Toda entrada de API é validada com Zod. Os erros aparecem ao usuário em português, de forma clara.
 - Sem segredos no código: use `.env`, com um `.env.example` documentado.
 - Commits pequenos e descritivos, em português, ao fim de cada etapa concluída.

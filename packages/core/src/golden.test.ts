@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { calcularCubagem } from './cubagem.js';
+import { calcularFtl } from './ftl.js';
 import { calcularSpot } from './spot.js';
 import { calcularValorTarifa } from './tarifa-aerea.js';
 
@@ -121,5 +122,58 @@ describe('Golden: Tarifa aérea', () => {
     const r = calcularValorTarifa(100, { tarifaKg: '5.00', minimo: '120.00' });
     expect(f2(r.valor)).toBe('500.00');
     expect(r.aplicouMinimo).toBe(false);
+  });
+});
+
+describe('Golden: Cubagem com vários volumes (app atual, por embarque)', () => {
+  it('Rodoviário: 0,5×0,8×1,2 200 kg + 0,2×0,4×0,45 3 kg → bruto 203, cubado 154,80, taxado 203,00', () => {
+    const r = calcularCubagem({
+      modal: 'RODOVIARIO',
+      volumes: [
+        { comprimentoM: '0,50', larguraM: '0,80', alturaM: '1,20', pesoBrutoKg: '200' },
+        { comprimentoM: '0,20', larguraM: '0,40', alturaM: '0,45', pesoBrutoKg: '3' },
+      ],
+    });
+    expect(f2(r.pesoBrutoTotal)).toBe('203.00');
+    expect(f2(r.pesoCubadoTotal)).toBe('154.80');
+    expect(f2(r.pesoTaxadoTotal)).toBe('203.00');
+    expect(r.volumes.map((v) => f2(v.pesoTaxado))).toEqual(['200.00', '10.80']);
+  });
+
+  it('Aéreo: 3 volumes → bruto 207, cubado 102,88, taxado 207,00 (16,875 → 16,88)', () => {
+    const r = calcularCubagem({
+      modal: 'AEREO',
+      volumes: [
+        { comprimentoM: '0,50', larguraM: '0,80', alturaM: '1,20', pesoBrutoKg: '200' },
+        { comprimentoM: '0,20', larguraM: '0,40', alturaM: '0,45', pesoBrutoKg: '3' },
+        { comprimentoM: '0,50', larguraM: '0,45', alturaM: '0,45', pesoBrutoKg: '4' },
+      ],
+    });
+    expect(r.volumes.map((v) => [f2(v.pesoCubado), f2(v.pesoTaxado)])).toEqual([
+      ['80.00', '200.00'],
+      ['6.00', '6.00'],
+      ['16.88', '16.88'],
+    ]);
+    expect(f2(r.pesoBrutoTotal)).toBe('207.00');
+    expect(f2(r.pesoCubadoTotal)).toBe('102.88');
+    expect(f2(r.pesoTaxadoTotal)).toBe('207.00');
+  });
+});
+
+describe('Golden: FTL Fiat (app atual)', () => {
+  it('SP Capital, VAN R$ 3,60/km, 300 km → R$ 1.080,00; ad valorem 0,5% informativo', () => {
+    const r = calcularFtl({
+      tarifa: {
+        uf: 'SP',
+        regiao: 'Grande SP',
+        localidade: 'CAPITAL',
+        tarifaKm: { UTILITARIO: '2.50', VAN: '3.60', TRES_QUARTOS: '4.00' },
+        adValoremPct: '0.5',
+      },
+      veiculo: 'VAN',
+      distanciaKm: '300',
+    });
+    expect(f2(r.total)).toBe('1080.00');
+    expect(r.adValorem.pct.toString()).toBe('0.5');
   });
 });

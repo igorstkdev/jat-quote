@@ -11,13 +11,13 @@ export const FATOR_CUBAGEM: Readonly<Record<Modal, string>> = Object.freeze({
 
 /**
  * Como somar o peso taxado total (CLAUDE.md §3.2):
- * - POR_VOLUME: Σ MAX(bruto, cubado) de cada linha (comportamento do app atual).
- * - POR_EMBARQUE: MAX(Σ bruto, Σ cubado) (padrão de mercado no aéreo).
+ * - POR_VOLUME: Σ MAX(bruto, cubado) de cada linha.
+ * - POR_EMBARQUE: MAX(Σ bruto, Σ cubado). É o que o app atual faz (confirmado em 07/11/2026).
  */
 export type ModoTaxado = 'POR_VOLUME' | 'POR_EMBARQUE';
 
-/** ⚠️ Padrão provisório até a confirmação da JAT (CLAUDE.md §3.2). */
-export const MODO_TAXADO_PADRAO: ModoTaxado = 'POR_VOLUME';
+/** Padrão confirmado em 07/11/2026 com o app atual (CLAUDE.md §3.2). */
+export const MODO_TAXADO_PADRAO: ModoTaxado = 'POR_EMBARQUE';
 
 export interface VolumeEntrada {
   comprimentoM: Entrada;
