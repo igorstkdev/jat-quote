@@ -15,6 +15,8 @@ import { clientRoutes } from './routes/clients.js';
 import { healthRoutes } from './routes/health.js';
 import { settingsRoutes } from './routes/settings.js';
 import { userRoutes } from './routes/users.js';
+import { quoteRoutes } from './routes/quotes.js';
+import { fecharNavegadorPdf } from './lib/pdf.js';
 
 // Mensagens padrão do Zod em português.
 z.config(z.locales.pt());
@@ -89,6 +91,8 @@ export async function buildApp({
   await app.register(clientRoutes(db));
   await app.register(settingsRoutes(db));
   await app.register(auditRoutes(db));
+  await app.register(quoteRoutes(db));
+  app.addHook('onClose', fecharNavegadorPdf);
 
   if (existsSync(webDist)) {
     await app.register(fastifyStatic, { root: webDist, wildcard: false });

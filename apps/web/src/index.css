@@ -13,7 +13,7 @@
   --radius: 0.625rem;
 
   /* Identidade (placeholder até receber as cores oficiais) */
-  --brand: oklch(0.55 0.2 262); /* azul */
+  --brand: oklch(0.405 0.137 264); /* azul JAT #1F428A (logo oficial) */
   --brand-foreground: oklch(0.99 0 0);
   --brand-accent: oklch(0.68 0.19 45); /* laranja */
 
@@ -47,7 +47,7 @@
 }
 
 .dark {
-  --brand: oklch(0.66 0.17 262);
+  --brand: oklch(0.68 0.14 262); /* azul JAT clareado para fundo escuro */
   --brand-foreground: oklch(0.15 0.02 264);
   --brand-accent: oklch(0.74 0.16 50);
 

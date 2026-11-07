@@ -52,6 +52,10 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - Cotações têm **número sequencial legível** (ex.: `JQ-000123`), **uma sequência única** para Spot e FTL, com o modal como campo.
 - **Cotação Aprovada não pode ser editada.** Para corrigir: o Admin volta o status (registrado na auditoria) ou usa "Duplicar como nova cotação".
 - Rascunho local é guardado **por usuário**.
+- **Validade da cotação: 30 dias** (aparece no PDF e no texto copiado). Confirmado em 07/11/2026.
+- **Cidades de origem/destino: lista oficial do IBGE** (autocompletar, sem internet), sempre "Cidade, UF".
+- **Qualquer usuário pode editar cotação de outro** (exceto Aprovada); toda edição vai para a auditoria.
+- PDF do app atual (referência, 07/11/2026): título, ROTA "Cidade, UF -> Cidade, UF", data/hora, "Detalhamento dos Custos (MKUP Individual)" com, por componente, Custo base / + MKUP (x%) / Total com MKUP; depois MKUP Total Aplicado, Subtotal com MKUP, Pedágio e TOTAL DO FRETE. Não mostra cliente nem validade. Ou seja, é uma **visão da operação**.
 
 ### 3.2 Cubagem
 
@@ -154,7 +158,7 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
 Objetivo: interface **profissional e impressionante**, no nível de produtos SaaS modernos (Linear, Vercel, Stripe). Nada de visual de formulário genérico.
 
 - Tema claro e escuro, com alternância.
-- Identidade JAT: cores e logo serão fornecidos. Até lá, use tokens de cor centralizados (CSS variables) e um logo placeholder fácil de trocar.
+- Identidade JAT: logo oficial em `apps/web/public/brand/logo-jat.png` (recebida em 07/11/2026; fica branca no tema escuro). Cor principal = azul da logo **#1F428A**. Cores sempre via tokens (CSS variables). Uma versão vetorial (SVG) da logo melhoraria a nitidez no PDF.
 - Tipografia Inter ou Geist; números tabulares nos valores monetários.
 - Layout: sidebar recolhível, cabeçalho com usuário e perfil, paleta de comandos (Ctrl+K), atalhos de teclado nas ações frequentes.
 - Feedback: skeletons no carregamento, toasts nas ações, estados vazios bem desenhados, confirmação em ações destrutivas.

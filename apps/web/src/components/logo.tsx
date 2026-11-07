@@ -1,34 +1,49 @@
 import { cn } from '@/lib/utils';
 
+/** Logo oficial (PNG recortado). Para trocar, substitua public/brand/logo-jat.png. */
+export const LOGO_URL = '/brand/logo-jat.png';
+
 /**
- * Logo PLACEHOLDER do JAT Quote.
- * Para trocar pelo logo oficial: substitua o <svg> abaixo (ou importe o arquivo
- * SVG da JAT) e mantenha a mesma interface do componente.
+ * Logo do Grupo JAT + nome do sistema.
+ * - `branco`: força a versão branca (fundos escuros, ex.: painel do login).
+ * - No tema escuro a logo azul vira branca automaticamente.
  */
-export function Logo({ className, withText = true }: { className?: string; withText?: boolean }) {
+export function Logo({
+  className,
+  withText = true,
+  branco = false,
+}: {
+  className?: string;
+  withText?: boolean;
+  branco?: boolean;
+}) {
   return (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
-      <svg viewBox="0 0 32 32" className="size-8 shrink-0" aria-hidden="true">
-        <defs>
-          <linearGradient id="jat-logo-g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="var(--brand)" />
-            <stop offset="1" stopColor="var(--brand-accent)" />
-          </linearGradient>
-        </defs>
-        <rect width="32" height="32" rx="8" fill="url(#jat-logo-g)" />
-        <path
-          d="M9 21.5 21.5 9M14 9h7.5v7.5"
-          fill="none"
-          stroke="#fff"
-          strokeWidth="2.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+    <span className={cn('inline-flex items-center gap-3', className)}>
+      <img
+        src={LOGO_URL}
+        alt="Grupo JAT"
+        width={197}
+        height={74}
+        className={cn(
+          'w-auto shrink-0 select-none',
+          withText ? 'h-8' : 'h-5',
+          branco ? 'brightness-0 invert' : 'dark:brightness-0 dark:invert',
+        )}
+        draggable={false}
+      />
       {withText && (
-        <span className="flex flex-col leading-none">
-          <span className="text-[15px] font-semibold tracking-tight">JAT Quote</span>
-          <span className="text-muted-foreground mt-1 text-[11px]">Cotação de Fretes</span>
+        <span
+          className={cn(
+            'flex flex-col border-l pl-3 leading-none',
+            branco ? 'border-white/25' : 'border-border',
+          )}
+        >
+          <span className="text-[15px] font-semibold tracking-tight">Quote</span>
+          <span
+            className={cn('mt-1 text-[11px]', branco ? 'text-white/65' : 'text-muted-foreground')}
+          >
+            Cotação de Fretes
+          </span>
         </span>
       )}
     </span>

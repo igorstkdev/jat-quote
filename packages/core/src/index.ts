@@ -47,3 +47,25 @@ export type {
 } from './tarifa-aerea.js';
 export { calcularFtl, KM_MINIMO_FTL, VEICULOS_FTL, ROTULO_VEICULO } from './ftl.js';
 export type { VeiculoFtl, TipoLocalidade, TarifaFtl, EntradaFtl, ResultadoFtl } from './ftl.js';
+export {
+  UFS,
+  SIGLAS_UF,
+  listarMunicipios,
+  buscarMunicipios,
+  encontrarMunicipio,
+  formatarCidade,
+  normalizarTexto,
+  ehUf,
+} from './municipios.js';
+export type { Uf, Municipio } from './municipios.js';
+export {
+  VALIDADE_COTACAO_DIAS,
+  ROTULO_MODAL,
+  formatarNumeroCotacao,
+  formatarDataBR,
+  dataValidade,
+  textoCotacao,
+  assuntoCotacao,
+  linkEmailCotacao,
+} from './cotacao.js';
+export type { DadosTextoCotacao } from './cotacao.js';

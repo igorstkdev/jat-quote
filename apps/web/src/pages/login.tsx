@@ -59,7 +59,7 @@ export default function LoginPage() {
           }}
         />
         <div className="relative flex h-full flex-col justify-between p-12 text-white">
-          <Logo className="[&_span]:text-white [&_.text-muted-foreground]:text-white/60" />
+          <Logo branco />
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
