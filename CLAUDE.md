@@ -56,6 +56,7 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - **Cidades de origem/destino: lista oficial do IBGE** (autocompletar, sem internet), sempre "Cidade, UF".
 - **Qualquer usuário pode editar cotação de outro** (exceto Aprovada); toda edição vai para a auditoria.
 - PDF do app atual (referência, 07/11/2026): título, ROTA "Cidade, UF -> Cidade, UF", data/hora, "Detalhamento dos Custos (MKUP Individual)" com, por componente, Custo base / + MKUP (x%) / Total com MKUP; depois MKUP Total Aplicado, Subtotal com MKUP, Pedágio e TOTAL DO FRETE. Não mostra cliente nem validade. Ou seja, é uma **visão da operação**.
+- **PDF que vai para o cliente = versão SEM custos internos** (confirmado em 07/11/2026): número, data, cliente, rota, modal, valor do frete, ad valorem e validade de 30 dias. A versão "da operação" (com custo base e MKUP por componente, igual ao app atual) é só para uso interno.
 
 ### 3.2 Cubagem
 
