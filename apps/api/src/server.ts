@@ -10,6 +10,7 @@ const app = await buildApp({
   sessionTtlHours: env.SESSION_TTL_HOURS,
   cookieSecure: env.COOKIE_SECURE,
   trustProxy: env.TRUST_PROXY,
+  loginRateLimit: env.LOGIN_RATE_LIMIT,
 });
 
 async function shutdown(signal: string) {

@@ -52,7 +52,16 @@ scripts         Scripts de apoio (criação do banco, backup)
    npm run db:migrate
    ```
 
-5. (Uma vez por máquina, para os testes E2E) instale o navegador do Playwright:
+5. Crie o Admin inicial, as configurações padrão e os links úteis:
+
+   ```bash
+   npm run db:seed
+   ```
+
+   O comando mostra **uma única vez** a senha temporária do usuário `admin`. Anote-a: no primeiro
+   acesso o sistema exige trocar a senha. Rodar de novo não altera nada que já exista.
+
+6. (Uma vez por máquina, para os testes E2E) instale o navegador do Playwright:
 
    ```bash
    npx playwright install chromium
@@ -78,6 +87,16 @@ scripts         Scripts de apoio (criação do banco, backup)
 
 Em produção, com `HOST=0.0.0.0`, os operadores acessam pela rede em `http://<servidor>:<PORT>`.
 A execução como serviço do Windows é configurada na Fase 6.
+
+## Acesso e segurança
+
+- Login por usuário e senha (argon2id). A sessão expira após **12 horas sem uso** (`SESSION_TTL_HOURS`).
+- **5 senhas erradas seguidas** bloqueiam o usuário por **15 minutos**; o Admin pode desbloquear redefinindo a senha.
+- Senhas: mínimo de 8 caracteres, com letras e números. Usuários nunca são excluídos, apenas desativados.
+- Perfis: **Admin** (tudo) e **Operacional** (cotações, tarifas, relatórios, clientes). A permissão
+  "Pode editar tarifas" libera o cadastro de tarifas. Todas as permissões são checadas no servidor.
+- Toda alteração fica na **Auditoria** (Administração → Auditoria), com o antes e o depois.
+- Atalhos: **Ctrl+K** abre a busca de telas e ações; **Ctrl+B** recolhe o menu.
 
 ## Banco de dados
 

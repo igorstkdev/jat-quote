@@ -1,14 +1,30 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode } from 'react';
+import { StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
+import { RouterProvider } from 'react-router';
 import { Toaster } from 'sonner';
-import { App } from './App';
-import { ThemeProvider } from './lib/theme';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { ApiError } from './lib/api';
+import { SessaoWatcher } from './lib/auth';
+import { ThemeProvider, useTheme } from './lib/theme';
+import { router } from './router';
 import './index.css';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+      // Não insiste em erros de permissão/validação; tenta de novo só em falha de rede/servidor.
+      retry: (n, e) => n < 2 && (!(e instanceof ApiError) || e.status === 0 || e.status >= 500),
+    },
+  },
 });
+
+function Toasts() {
+  const { theme } = useTheme();
+  return <Toaster theme={theme} richColors position="bottom-right" closeButton />;
+}
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Elemento #root não encontrado');
@@ -17,8 +33,13 @@ createRoot(root).render(
   <StrictMode>
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <App />
-        <Toaster richColors position="bottom-right" />
+        <TooltipProvider delayDuration={300}>
+          <SessaoWatcher />
+          <Suspense>
+            <RouterProvider router={router} />
+          </Suspense>
+          <Toasts />
+        </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
   </StrictMode>,

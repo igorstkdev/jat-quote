@@ -14,6 +14,7 @@ const PORT = 3399;
 
 export default defineConfig({
   testDir: 'e2e',
+  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
@@ -33,6 +34,7 @@ export default defineConfig({
       HOST: '127.0.0.1',
       PORT: String(PORT),
       LOG_LEVEL: 'warn',
+      LOGIN_RATE_LIMIT: '1000',
       DATABASE_URL: process.env.TEST_DATABASE_URL ?? '',
     },
   },
