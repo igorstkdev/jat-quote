@@ -114,6 +114,8 @@ Pendente (azul), Aprovada (verde), Declinada (laranja: cliente recusou por preç
 
 - CRUD com busca em tempo real.
 - **Exclusão = desativação (soft delete)**: o histórico continua mostrando o nome do cliente. Clientes inativos não aparecem para novas cotações.
+- Campos (Fase 2): Nome (obrigatório, único entre os ativos, sem diferenciar maiúsculas), CNPJ/CPF, Contato, E-mail, Telefone, Observações.
+- Operacional cadastra e edita clientes; **desativar/reativar é só Admin**.
 
 ### 3.9 Usuários e acesso
 
@@ -124,10 +126,11 @@ Pendente (azul), Aprovada (verde), Declinada (laranja: cliente recusou por preç
 - Ativar/desativar usuário, redefinição de senha pelo Admin, troca da própria senha.
 - **Sem "modo visitante".**
 - Log de auditoria: login, criação/edição/exclusão de cotações, tarifas, clientes e usuários.
+- Regras de acesso (Fase 2): sessão expira após **12 h sem uso**; senha com **mínimo 8 caracteres, letras e números**; **5 erros seguidos bloqueiam por 15 min**; usuários **nunca são excluídos**, só desativados; Admin não desativa a si mesmo e sempre resta ao menos 1 Admin ativo. Senha temporária (novo usuário/redefinição) é gerada pelo sistema e mostrada uma única vez.
 
 ### 3.10 Links úteis
 
-Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp (https://qualp.com.br/#/), Google Maps, WebRouter, JAT Transportes.
+Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp (https://qualp.com.br/#/), Google Maps (https://www.google.com/maps), WebRouter, JAT Transportes. ⚠️ URLs do WebRouter e do JAT Transportes ainda não informadas: o seed cria só Qualp e Google Maps; o Admin adiciona os outros em Configurações.
 
 ## 4. Padrões de qualidade
 
