@@ -1,0 +1,21 @@
+{
+  "name": "@jat/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Regras de negócio puras do JAT Quote (cálculos de frete, cubagem, tarifas).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@jat/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0"
+  }
+}

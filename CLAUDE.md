@@ -1,0 +1,151 @@
+# JAT Quote — Contexto do Projeto (v1.0 beta)
+
+> Este arquivo é lido automaticamente pelo Claude Code em toda sessão. Ele é a fonte única de verdade do projeto.
+> Atualize-o sempre que uma regra de negócio for confirmada ou alterada.
+
+## 1. O que é
+
+**JAT Quote — Cotação de Fretes** é o sistema interno da JAT Transportes e Logística para cotação, cálculo e acompanhamento de fretes aéreos e rodoviários (incluindo FTL Fiat). Ele substitui o app "Spot Calculator" feito no Base44 (https://calculadora-de-frete-spot-jat.base44.app), que deixará de ser usado.
+
+- Uso: **interno, multiusuário, rede local da empresa**. Um servidor roda na rede e os operadores acessam pelo navegador.
+- Idioma da interface: **português brasileiro**. Moeda: BRL (`R$ 1.234,56`). Datas: `dd/mm/aaaa`. Fuso: America/Sao_Paulo.
+- Público: operadores logísticos (perfil Operacional) e gestores (perfil Admin).
+
+## 2. Stack obrigatória
+
+| Camada            | Tecnologia                                                                             |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| Linguagem         | TypeScript em todo o projeto (strict)                                                  |
+| Estrutura         | Monorepo com npm workspaces: `apps/api`, `apps/web`, `packages/core`                   |
+| Regras de negócio | `packages/core`: funções puras de cálculo, sem dependência de framework, 100% testadas |
+| Backend           | Node.js LTS + Fastify + Zod (validação)                                                |
+| Banco             | PostgreSQL + Prisma (migrations versionadas)                                           |
+| Autenticação      | Sessão via cookie httpOnly + senhas com **argon2** (nunca SHA-256)                     |
+| Frontend          | React + Vite + Tailwind CSS + shadcn/ui + TanStack Query + TanStack Table              |
+| Gráficos          | Recharts                                                                               |
+| Animações         | Framer Motion (sutis, nunca atrapalham a operação)                                     |
+| Exportações       | ExcelJS (.xlsx), geração de PDF no servidor, CSV para tarifas                          |
+| Testes            | Vitest (unitários e integração) + Playwright (E2E e screenshots da interface)          |
+
+Não troque nenhuma peça da stack sem me perguntar antes.
+
+## 3. Regras de negócio (validadas no app atual em 05/11/2026)
+
+O **app em produção é a referência**, não a documentação antiga. Onde houver dúvida, pergunte antes de implementar.
+
+### 3.1 Frete Spot
+
+- Campos: Cliente (obrigatório), Cidade/UF de origem, Cidade/UF de destino, Tipo de transporte (Aéreo | Rodoviário), custos, Pedágio, Markup %, Ad valorem %, Observações.
+- **Rodoviário**: campo único "Custo Rodoviário (R$)".
+- **Aéreo** (confirmado em 07/11/2026): três campos, "Custo de Coleta (R$)", "Custo Aéreo (R$)" e "Custo de Entrega (R$)". Pedágio também se aplica ao aéreo.
+- Fórmulas:
+  - `Subtotal = SomaDosCustos × (1 + Markup% / 100)`
+  - `Total = Subtotal + Pedágio` (pedágio não recebe markup)
+  - O markup é exibido também por componente: `Componente × (1 + Markup%/100)`.
+  - O painel de resultado mostra: Total do Frete (destaque), "MKUP Total Aplicado" (= Subtotal − SomaDosCustos), "Subtotal com MKUP", Pedágio, "Total Final" e um expansor "Detalhar Custos com MKUP" (por componente).
+  - Exemplos reais do app atual: Rodoviário 350 + pedágio 150, markup 70% → MKUP 245, subtotal 595, total **745,00**. Aéreo 300 + 600 + 150, pedágio 150, markup 70% → MKUP 735, subtotal 1.785, total **1.935,00**.
+- **Ad valorem é APENAS INFORMATIVO**: não entra em nenhuma soma (total, dashboard, relatórios, Excel). Padrão **por modal: Aéreo 0,47% e Rodoviário 0,15%** (padrões configuráveis pelo Admin), editável por cotação; campo em branco = usa o padrão do modal. Aparece no PDF e no texto copiado como condição comercial: _"Ad valorem de X% sobre o valor da nota fiscal, cobrado adicionalmente."_
+- Campo opcional "Valor estimado da mercadoria": se preenchido, mostra a estimativa do ad valorem como informativa, fora do total.
+- Ações: Salvar (status inicial "Pendente"), Editar, Limpar, PDF, Copiar (texto formatado para WhatsApp/e-mail), Enviar e-mail (`mailto:` com assunto e corpo preenchidos).
+- Rascunho do formulário persistido localmente para não perder dados ao recarregar.
+- Cotações têm **número sequencial legível** (ex.: `JQ-000123`), **uma sequência única** para Spot e FTL, com o modal como campo.
+- **Cotação Aprovada não pode ser editada.** Para corrigir: o Admin volta o status (registrado na auditoria) ou usa "Duplicar como nova cotação".
+- Rascunho local é guardado **por usuário**.
+
+### 3.2 Cubagem
+
+- Dimensões em **metros**, peso em kg.
+- Fatores: **Aéreo = 166,667 kg/m³** e **Rodoviário = 300 kg/m³**.
+- Por volume: `PesoCubado = C × L × A × Fator`; `PesoTaxado = MAX(PesoBruto, PesoCubado)`.
+- Totais: somas de peso bruto, peso cubado e peso taxado.
+- **Quantidade por volume** (novo; o app atual não tem): peso bruto informado **por unidade**; taxado da linha = `MAX(bruto, cubado)` por unidade × quantidade.
+- **Modo de cálculo do taxado total** (configuração): "por volume" = Σ dos taxados de cada linha; "por embarque" = `MAX(Σ bruto, Σ cubado)` (padrão de mercado no aéreo). ⚠️ Padrão ainda NÃO CONFIRMADO: usar "por volume" (comportamento do app atual) até a confirmação.
+- Funcionalidades: múltiplos volumes, adicionar, remover, duplicar, quantidade por volume.
+
+### 3.3 Tarifas aéreas
+
+- Chave: aeroporto de origem (IATA, 3 letras), aeroporto de destino (IATA) e companhia (GOL | AZUL | LATAM).
+- Níveis: Urgente, Rápido e Econômico, cada um com tarifa/kg e mínimo. **Os 3 níveis são opcionais** por tarifa.
+- `Valor = MAX(Peso × Tarifa/kg, Mínimo)`.
+- Calculadora rápida: origem + destino + nível + peso taxado → lista todas as companhias da rota, **ordenadas pelo menor custo**. Botão Limpar; estado vazio "Aguardando cálculo".
+- Gestão: criar com vigência (início/fim), editar (gera histórico automático), ativar/desativar, duplicar, importar/exportar CSV, histórico completo por tarifa.
+- **Vigências sobrepostas são proibidas** (mesma rota + companhia), validado no servidor.
+- Tela do app atual (referência): cartões com Total de Tarifas e totais por companhia (GOL, AZUL, LATAM); "Links de Rastreio" (Rastreio Gollog, Rastreio Azul Cargo); tabela com busca por aeroporto/CIA, filtro de status, colunas Rota, CIA, Urgente, Rápido, Econômico, Status, Versão e Ações; botões Importar CSV, Exportar CSV, Nova Tarifa e "Excluir Tudo" (somente Admin, com confirmação forte).
+
+### 3.4 FTL Fiat
+
+- Tabela: UF destino, Região, Tipo de localidade (Capital | Interior), R$/km para Utilitário, VAN e 1.5T, e Ad valorem %.
+- `Frete = Distância (km) × Tarifa/km do veículo`. Ad valorem informativo, fora do total.
+- Distância em km **digitada pelo operador** na v1 (Google Maps automático fica para versão futura).
+- ⚠️ Pedágio e markup no FTL: NÃO CONFIRMADO. Pergunte antes de implementar.
+- CRUD, histórico de alterações, importar/exportar CSV, histórico de cotações FTL com status.
+
+### 3.5 Status das cotações
+
+Pendente (azul), Aprovada (verde), Declinada (laranja: cliente recusou por preço/prazo), Recusada (vermelho: inviável operacionalmente). Toda mudança de status é registrada (quem, quando, de → para).
+
+### 3.6 Relatório Spot
+
+- Filtros combináveis: texto (nº da cotação, cliente, origem, destino), período, status e modal.
+- Estatísticas: quantidade, valor total, distribuição por status (quantidade e valor).
+- Por cotação: Visão Cliente (sem custos internos), Visão Operação (todos os componentes), Alterar status, Editar (bloqueado se Aprovada), Duplicar como nova, PDF, Excluir (somente Admin, **soft delete**).
+- Exportação Excel das cotações filtradas, com cabeçalho formatado.
+
+### 3.7 Dashboard
+
+- KPIs: total de cotações, cotações hoje, aprovadas, **Valor cotado** (todas), **Valor aprovado** e **taxa de conversão** = Aprovadas ÷ (Aprovadas + Declinadas). Recusadas e Pendentes não entram.
+- Spot e FTL juntos, com filtro por modal.
+- Gráficos: volume mensal (aéreo × rodoviário), Top 10 rotas, distribuição por status (pizza + barras de valor).
+- Filtro de período global, atalhos para os módulos, atividade recente.
+
+### 3.8 Clientes
+
+- CRUD com busca em tempo real.
+- **Exclusão = desativação (soft delete)**: o histórico continua mostrando o nome do cliente. Clientes inativos não aparecem para novas cotações.
+
+### 3.9 Usuários e acesso
+
+- Login por usuário + senha. Perfis:
+  - **Admin**: acesso total, gestão de usuários, configurações, exclusões.
+  - **Operacional**: cotações, consulta de tarifas, relatórios. Não exclui nem acessa a área administrativa.
+- Permissão adicional **"Pode editar tarifas"** (substitui as "senhas de área" do app antigo, que eram validadas no navegador e podiam ser burladas). Toda checagem de permissão acontece **no servidor**.
+- Ativar/desativar usuário, redefinição de senha pelo Admin, troca da própria senha.
+- **Sem "modo visitante".**
+- Log de auditoria: login, criação/edição/exclusão de cotações, tarifas, clientes e usuários.
+
+### 3.10 Links úteis
+
+Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Quelp, Google Maps, WebRouter, JAT Transportes.
+
+## 4. Padrões de qualidade
+
+- **Dinheiro**: nunca use float. Use `decimal.js` no `packages/core` e `Decimal(14,2)` no banco. Calcule sem arredondar e arredonde **só o resultado final**, com **arredondamento comercial (meio para cima, `ROUND_HALF_UP`)**, o mesmo do Excel. O valor gravado já é o arredondado, para PDF, Excel e tela baterem.
+- **PDF**: HTML → PDF com o Chromium do Playwright no servidor (requer Chromium instalado no servidor, ~300 MB).
+- **Testes de referência (golden tests)** que precisam passar sempre:
+  - Rodoviário: custo R$ 1.000, markup 10%, pedágio R$ 100 → subtotal **R$ 1.100,00** e total **R$ 1.200,00**; ad valorem 0,15% fora do total.
+  - Cubagem 1×1×1 m, 10 kg → aéreo **166,67 kg** e rodoviário **300,00 kg**.
+  - Tarifa aérea: peso × tarifa abaixo do mínimo → cobra o mínimo.
+  - Rodoviário (app atual): custo 350, markup 70%, pedágio 150 → MKUP **245,00**, subtotal **595,00**, total **745,00**.
+  - Aéreo (app atual): coleta 300, aéreo 600, entrega 150, markup 70%, pedágio 150 → MKUP **735,00**, subtotal **1.785,00**, total **1.935,00**.
+- Toda entrada de API é validada com Zod. Os erros aparecem ao usuário em português, de forma clara.
+- Sem segredos no código: use `.env`, com um `.env.example` documentado.
+- Commits pequenos e descritivos, em português, ao fim de cada etapa concluída.
+
+## 5. Padrão visual
+
+Objetivo: interface **profissional e impressionante**, no nível de produtos SaaS modernos (Linear, Vercel, Stripe). Nada de visual de formulário genérico.
+
+- Tema claro e escuro, com alternância.
+- Identidade JAT: cores e logo serão fornecidos. Até lá, use tokens de cor centralizados (CSS variables) e um logo placeholder fácil de trocar.
+- Tipografia Inter ou Geist; números tabulares nos valores monetários.
+- Layout: sidebar recolhível, cabeçalho com usuário e perfil, paleta de comandos (Ctrl+K), atalhos de teclado nas ações frequentes.
+- Feedback: skeletons no carregamento, toasts nas ações, estados vazios bem desenhados, confirmação em ações destrutivas.
+- Resultado da calculadora atualizado em tempo real, com destaque visual no total.
+- Após cada tela pronta, tire screenshots com Playwright (claro e escuro, 1366×768 e 1920×1080), revise e corrija espaçamento, alinhamento e contraste antes de me mostrar.
+
+## 6. Forma de trabalho
+
+- Trabalhe **por fases** (ver `ROADMAP.md`). Ao fim de cada fase: rode todos os testes, faça o commit, resuma o que foi feito e **pare para eu validar** antes de seguir.
+- Antes de cada fase, apresente um plano curto e aguarde meu OK.
+- Diante de uma regra ambígua, **pergunte**. Nunca invente regra de negócio.
+- Mantenha `README.md` com instruções de instalação, execução e backup.

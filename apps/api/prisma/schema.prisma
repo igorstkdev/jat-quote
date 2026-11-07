@@ -1,0 +1,23 @@
+// JAT Quote — modelo de dados.
+// Fase 0: apenas a tabela de configurações. O modelo completo entra na Fase 2.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  runtime                = "nodejs"
+  moduleFormat           = "esm"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Configurações do sistema (chave → valor JSON), editáveis pelo Admin.
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
