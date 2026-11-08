@@ -137,6 +137,12 @@ Pendente (azul), Aprovada (verde), Declinada (laranja: cliente recusou por preç
 
 Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp (https://qualp.com.br/#/), Google Maps (https://www.google.com/maps), WebRouter, JAT Transportes. ⚠️ URLs do WebRouter e do JAT Transportes ainda não informadas: o seed cria só Qualp e Google Maps; o Admin adiciona os outros em Configurações.
 
+### 3.11 Instalação e custo (diretriz, 08/11/2026)
+
+- Instalação no servidor **o mais prática possível** (meta: um script que faz tudo) e sempre a opção de **custo zero ou próximo de zero** (software livre/gratuito; sem licenças pagas, sem serviços em nuvem pagos).
+- Só o servidor recebe instalação; os operadores usam o navegador.
+- ⚠️ Pendente (antes da Fase 6): sistema operacional do servidor, quem tem acesso de administrador e porta de acesso.
+
 ## 4. Padrões de qualidade
 
 - **Dinheiro**: nunca use float. Use `decimal.js` no `packages/core` e `Decimal(14,2)` no banco. Calcule sem arredondar e arredonde **só o resultado final**, com **arredondamento comercial (meio para cima, `ROUND_HALF_UP`)**, o mesmo do Excel. O valor gravado já é o arredondado, para PDF, Excel e tela baterem.
