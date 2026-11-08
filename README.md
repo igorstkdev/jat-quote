@@ -105,6 +105,26 @@ A execução como serviço do Windows é configurada na Fase 6.
 - **Cubagem** (`/cubagem`): peso taxado total = maior entre a soma dos pesos brutos e a soma dos cubados.
 - Os formulários guardam um rascunho no navegador, separado por usuário.
 
+## Tarifas e FTL (Fase 4)
+
+- **Tarifas Aéreas** (`/tarifas-aereas`): cadastro por rota (IATA) e companhia, com vigência
+  (data final opcional), três níveis opcionais (Urgente, Rápido, Econômico) e histórico de versões.
+  Vigências sobrepostas da mesma rota e companhia são recusadas pelo servidor.
+- **Calculadora rápida**: usa só tarifas ativas e vigentes hoje e lista as companhias do menor para
+  o maior custo. "Usar no Frete Spot" leva o valor para o Custo Aéreo; "Usar peso da Cubagem" traz o
+  peso taxado aéreo da cubagem em andamento.
+- **FTL Fiat** (`/ftl`): abas Calculadora, Tabelas de Preço e Relatório. Só uma tabela ativa por UF
+  e tipo de localidade; a cotação FTL não tem cliente e bloqueia rotas abaixo de 25 km.
+- **CSV**: separado por ponto e vírgula, no layout do app antigo. A importação mostra uma prévia
+  com os erros por linha e só grava após a confirmação (com erro, nada é gravado). Linha com a mesma
+  chave de um cadastro existente atualiza esse cadastro (nova versão).
+- **Excluir tudo** (somente Admin, digitando `EXCLUIR TUDO`): arquiva os cadastros. Eles somem das
+  telas, mas o histórico e a auditoria continuam no banco.
+- Cadastrar ou alterar tarifas exige ser Admin ou ter a permissão "Pode editar tarifas".
+- **Status das cotações**: qualquer usuário muda o status de uma cotação que não está Aprovada;
+  tirar uma cotação de Aprovada é só do Admin. Cada mudança fica registrada.
+- Os links de rastreio (Gollog, Azul Cargo) são editados em Administração → Configurações.
+
 ## Acesso e segurança
 
 - Login por usuário e senha (argon2id). A sessão expira após **12 horas sem uso** (`SESSION_TTL_HOURS`).

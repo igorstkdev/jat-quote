@@ -106,9 +106,15 @@ export interface LinkUtil {
   active: boolean;
 }
 
+export interface LinkRastreio {
+  name: string;
+  url: string;
+}
+
 export interface Configuracoes {
   adValorem: { AEREO: string; RODOVIARIO: string };
   condicoesFtl: string;
+  linksRastreio: LinkRastreio[];
 }
 
 export interface RegistroAuditoria {
@@ -151,9 +157,97 @@ export interface Cotacao {
   subtotal: string;
   total: string;
   notes: string | null;
+  ftl: {
+    uf: string | null;
+    region: string;
+    locality: Localidade | null;
+    vehicle: VeiculoFtl | null;
+    distanceKm: string | null;
+    ratePerKm: string | null;
+    rateVersion: number | null;
+  } | null;
   duplicatedFromId: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy: { name: string; username: string } | null;
   updatedBy: { name: string; username: string } | null;
+}
+
+// ── Tarifas (Fase 4) ──
+
+export type Companhia = 'GOL' | 'AZUL' | 'LATAM';
+export type Nivel = 'URGENTE' | 'RAPIDO' | 'ECONOMICO';
+export type Localidade = 'CAPITAL' | 'INTERIOR';
+export type VeiculoFtl = 'UTILITARIO' | 'VAN' | 'TRES_QUARTOS';
+
+export interface TarifaAerea {
+  id: string;
+  origin: string;
+  destination: string;
+  airline: Companhia;
+  /** aaaa-mm-dd */
+  validFrom: string;
+  validTo: string | null;
+  active: boolean;
+  levels: Record<Nivel, { perKg: string; min: string } | null>;
+  notes: string | null;
+  version: number;
+  /** Ativa e vigente hoje (usada na calculadora). */
+  current: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpcaoCotacaoAerea {
+  airline: Companhia;
+  rateId: string;
+  version: number;
+  perKg: string;
+  min: string;
+  calculated: string;
+  value: string;
+  minimumApplied: boolean;
+}
+
+export interface TabelaFtl {
+  id: string;
+  uf: string;
+  region: string;
+  locality: Localidade;
+  perKm: Record<VeiculoFtl, string>;
+  adValoremPct: string;
+  active: boolean;
+  notes: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VersaoHistorico<T> {
+  id: string;
+  version: number;
+  action: string;
+  username: string | null;
+  at: string;
+  snapshot: T & { version: number };
+}
+
+export interface ResultadoImportacao {
+  applied: boolean;
+  summary: { total: number; criar: number; atualizar: number; igual: number; erros: number };
+  rows: {
+    linha: number;
+    acao: 'criar' | 'atualizar' | 'igual' | 'erro';
+    rota?: string;
+    erro?: string;
+  }[];
+}
+
+export interface MudancaStatus {
+  id: string;
+  from: StatusCotacao | null;
+  to: StatusCotacao;
+  note: string | null;
+  at: string;
+  user: string;
 }

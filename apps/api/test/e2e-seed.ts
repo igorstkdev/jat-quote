@@ -74,6 +74,79 @@ try {
       { name: 'Transportadora Antiga', active: false, notes: 'Contrato encerrado em 2025.' },
     ],
   });
+
+  // Tarifas aéreas de exemplo (Fase 4)
+  const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+  type N = [string, string] | null;
+  const tarifa = (
+    origin: string,
+    destination: string,
+    airline: 'GOL' | 'AZUL' | 'LATAM',
+    u: N,
+    r: N,
+    e: N,
+    extra: { validFrom?: string; validTo?: string; active?: boolean; notes?: string } = {},
+  ) => ({
+    origin,
+    destination,
+    airline,
+    validFrom: d(extra.validFrom ?? '2026-01-01'),
+    validTo: extra.validTo ? d(extra.validTo) : null,
+    active: extra.active ?? true,
+    notes: extra.notes ?? null,
+    urgentPerKg: u?.[0] ?? null,
+    urgentMin: u?.[1] ?? null,
+    fastPerKg: r?.[0] ?? null,
+    fastMin: r?.[1] ?? null,
+    economyPerKg: e?.[0] ?? null,
+    economyMin: e?.[1] ?? null,
+  });
+  await db.airRate.createMany({
+    data: [
+      tarifa('GRU', 'SSA', 'GOL', ['12.5', '150'], ['9.8', '120'], null),
+      tarifa('GRU', 'SSA', 'AZUL', ['10', '300'], ['9.5', '110'], ['7.2', '90']),
+      tarifa('GRU', 'SSA', 'LATAM', ['11', '100'], null, ['6.9', '95']),
+      tarifa('GRU', 'REC', 'GOL', ['13.2', '160'], ['10.5', '130'], ['7.9', '100']),
+      tarifa('GRU', 'REC', 'LATAM', ['12.9', '150'], null, null, { notes: 'Acordo 2026' }),
+      tarifa('GRU', 'BSB', 'LATAM', ['10.7', '120'], ['8.6', '100'], null),
+      tarifa('CGH', 'POA', 'AZUL', ['9.4', '140'], null, null, { active: false }),
+      tarifa('VCP', 'MAO', 'AZUL', ['18.4', '250'], ['14.9', '200'], ['11.2', '160'], {
+        validFrom: '2025-01-01',
+        validTo: '2025-12-31',
+      }),
+      tarifa('VCP', 'MAO', 'AZUL', ['19.1', '260'], ['15.4', '210'], ['11.6', '170']),
+    ],
+  });
+
+  // Tabelas FTL de exemplo (inclui o caso real SP Capital VAN R$ 3,60/km)
+  const ftl = (
+    uf: string,
+    region: string,
+    locality: 'CAPITAL' | 'INTERIOR',
+    [u, v, t]: [string, string, string],
+    adValoremPct: string,
+    active = true,
+  ) => ({
+    uf,
+    region,
+    locality,
+    perKmUtility: u,
+    perKmVan: v,
+    perKm15t: t,
+    adValoremPct,
+    active,
+  });
+  await db.ftlRate.createMany({
+    data: [
+      ftl('SP', 'Sudeste', 'CAPITAL', ['2.9', '3.6', '4.5'], '0.5'),
+      ftl('SP', 'Sudeste', 'INTERIOR', ['2.7', '3.3', '4.2'], '0.5'),
+      ftl('MG', 'Sudeste', 'CAPITAL', ['3', '3.8', '4.7'], '0.5'),
+      ftl('MG', 'Sudeste', 'INTERIOR', ['2.8', '3.5', '4.4'], '0.5'),
+      ftl('RJ', 'Sudeste', 'CAPITAL', ['3.1', '3.9', '4.8'], '0.5'),
+      ftl('BA', 'Nordeste', 'CAPITAL', ['3.4', '4.2', '5.1'], '0.7'),
+      ftl('PR', 'Sul', 'CAPITAL', ['3.05', '3.75', '4.65'], '0.5', false),
+    ],
+  });
 } finally {
   await db.$disconnect();
 }

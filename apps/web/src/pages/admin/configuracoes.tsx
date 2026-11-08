@@ -30,7 +30,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { api, ApiError, type Configuracoes, type LinkUtil } from '@/lib/api';
+import { api, ApiError, type Configuracoes, type LinkRastreio, type LinkUtil } from '@/lib/api';
 import { CHAVE_LINKS } from '@/lib/links';
 
 const CHAVE_CONFIG = ['settings'] as const;
@@ -48,6 +48,7 @@ export default function ConfiguracoesPage() {
           <TabsTrigger value="links">Links úteis</TabsTrigger>
           <TabsTrigger value="advalorem">Ad valorem</TabsTrigger>
           <TabsTrigger value="ftl">Condições FTL</TabsTrigger>
+          <TabsTrigger value="rastreio">Links de rastreio</TabsTrigger>
         </TabsList>
         <TabsContent value="links" className="mt-4">
           <LinksUteis />
@@ -57,6 +58,9 @@ export default function ConfiguracoesPage() {
         </TabsContent>
         <TabsContent value="ftl" className="mt-4">
           <CondicoesFtl />
+        </TabsContent>
+        <TabsContent value="rastreio" className="mt-4">
+          <LinksRastreio />
         </TabsContent>
       </Tabs>
     </Page>
@@ -437,6 +441,90 @@ function CondicoesFtl() {
               <span className="text-muted-foreground ml-auto text-xs tabular">
                 {texto.length} / 5000
               </span>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Links de rastreio (tela de Tarifas Aéreas) ──
+
+function LinksRastreio() {
+  const qc = useQueryClient();
+  const cfg = useConfiguracoes();
+  const [rascunho, setRascunho] = useState<LinkRastreio[] | null>(null);
+  const links = rascunho ?? cfg.data?.linksRastreio ?? [];
+  const mudou = cfg.data ? JSON.stringify(links) !== JSON.stringify(cfg.data.linksRastreio) : false;
+  const set = (i: number, k: keyof LinkRastreio, v: string) =>
+    setRascunho(links.map((l, j) => (j === i ? { ...l, [k]: v } : l)));
+  const salvar = useMutation({
+    mutationFn: () => api.put('/api/settings/tracking-links', { links }),
+    onSuccess: () => {
+      setRascunho(null);
+      toast.success('Links de rastreio salvos.');
+      void qc.invalidateQueries({ queryKey: CHAVE_CONFIG });
+    },
+  });
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Links de rastreio</CardTitle>
+        <CardDescription>
+          Aparecem na tela de Tarifas Aéreas, para rastrear cargas nas companhias.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {cfg.isPending ? (
+          <Skeleton className="h-24 w-full" />
+        ) : (
+          <>
+            <FormError mensagem={salvar.error?.message} />
+            {links.length === 0 && (
+              <p className="text-muted-foreground text-sm">Nenhum link de rastreio.</p>
+            )}
+            {links.map((l, i) => (
+              <div key={i} className="grid gap-2 sm:grid-cols-[14rem_minmax(0,1fr)_auto]">
+                <Input
+                  value={l.name}
+                  onChange={(e) => set(i, 'name', e.target.value)}
+                  aria-label={`Nome do link ${i + 1}`}
+                  placeholder="Nome"
+                />
+                <Input
+                  value={l.url}
+                  onChange={(e) => set(i, 'url', e.target.value)}
+                  aria-label={`Endereço do link ${i + 1}`}
+                  placeholder="https://"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Remover ${l.name || 'link'}`}
+                  onClick={() => setRascunho(links.filter((_, j) => j !== i))}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            ))}
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setRascunho([...links, { name: '', url: '' }])}
+                disabled={links.length >= 10}
+              >
+                <Plus /> Adicionar link
+              </Button>
+              <Button onClick={() => salvar.mutate()} disabled={salvar.isPending || !mudou}>
+                {salvar.isPending && <Loader2 className="animate-spin" />}
+                Salvar links
+              </Button>
+              {mudou && (
+                <Button variant="ghost" onClick={() => setRascunho(null)}>
+                  Descartar alterações
+                </Button>
+              )}
             </div>
           </>
         )}

@@ -59,6 +59,22 @@ export function CommandPalette({ aberto, onAbertoChange, onAlternarMenu }: Props
             <Plus />
             Novo cliente
           </CommandItem>
+          <CommandItem
+            value="nova cotação ftl fiat km"
+            onSelect={() => executar(() => navigate('/ftl'))}
+          >
+            <Plus />
+            Nova cotação FTL
+          </CommandItem>
+          {(ehAdmin(user) || user?.canEditRates) && (
+            <CommandItem
+              value="nova tarifa aérea cadastrar"
+              onSelect={() => executar(() => navigate('/tarifas-aereas?novo=1'))}
+            >
+              <Plus />
+              Nova tarifa aérea
+            </CommandItem>
+          )}
           {ehAdmin(user) && (
             <CommandItem
               value="novo usuário cadastrar"
