@@ -91,10 +91,19 @@ export async function prepararSpot(db: Db, e: EntradaSpotApi, clienteAtual?: str
   return { data, resultado: r };
 }
 
+/** Relações carregadas junto com a cotação nas respostas da API. */
+export const INCLUIR_COTACAO = {
+  createdBy: { select: { name: true, username: true } },
+  updatedBy: { select: { name: true, username: true } },
+  client: { select: { email: true, active: true } },
+  ftlRate: { select: { region: true } },
+} satisfies Prisma.QuoteInclude;
+
 type QuoteComRelacoes = Quote & {
   createdBy?: { name: string; username: string } | null;
   updatedBy?: { name: string; username: string } | null;
   client?: { email: string | null; active: boolean } | null;
+  ftlRate?: { region: string } | null;
 };
 
 const s = (d: { toString(): string } | null | undefined) => (d == null ? null : d.toString());
@@ -132,6 +141,18 @@ export function quoteDto(q: QuoteComRelacoes) {
     subtotal: s(q.subtotal),
     total: s(q.total),
     notes: q.notes,
+    ftl:
+      q.modal === 'FTL'
+        ? {
+            uf: q.destUf,
+            region: q.ftlRate?.region ?? '',
+            locality: q.ftlLocality,
+            vehicle: q.vehicle,
+            distanceKm: s(q.distanceKm),
+            ratePerKm: s(q.ratePerKm),
+            rateVersion: q.ftlRateVersion,
+          }
+        : null,
     duplicatedFromId: q.duplicatedFromId,
     createdAt: q.createdAt,
     updatedAt: q.updatedAt,

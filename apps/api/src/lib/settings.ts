@@ -5,6 +5,7 @@ import type { Db } from '../db.js';
 export const CHAVES = {
   adValorem: 'ad_valorem_padrao',
   condicoesFtl: 'condicoes_comerciais_ftl',
+  linksRastreio: 'links_rastreio',
 } as const;
 
 export interface AdValoremPadrao {
@@ -35,4 +36,22 @@ export async function lerAdValoremPadrao(db: Db): Promise<AdValoremPadrao> {
 export async function lerCondicoesFtl(db: Db): Promise<string> {
   const s = await db.setting.findUnique({ where: { key: CHAVES.condicoesFtl } });
   return typeof s?.value === 'string' ? s.value : CONDICOES_FTL_PADRAO;
+}
+
+export interface LinkRastreio {
+  name: string;
+  url: string;
+}
+
+/** Links de rastreio da tela de Tarifas Aéreas (informados em 08/11/2026), editáveis pelo Admin. */
+export const LINKS_RASTREIO_PADRAO: readonly LinkRastreio[] = Object.freeze([
+  { name: 'Rastreio Gollog', url: 'https://servicos.gollog.com.br/app/site/tracking' },
+  { name: 'Rastreio Azul Cargo', url: 'https://www.azullogistica.com.br/Rastreio' },
+]);
+
+export async function lerLinksRastreio(db: Db): Promise<LinkRastreio[]> {
+  const s = await db.setting.findUnique({ where: { key: CHAVES.linksRastreio } });
+  return Array.isArray(s?.value)
+    ? (s.value as unknown as LinkRastreio[])
+    : [...LINKS_RASTREIO_PADRAO];
 }

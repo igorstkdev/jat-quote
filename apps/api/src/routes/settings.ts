@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Db } from '../db.js';
 import { diferencas, registrarAuditoria } from '../lib/audit.js';
 import { naoEncontrado } from '../lib/errors.js';
-import { CHAVES, lerAdValoremPadrao, lerCondicoesFtl } from '../lib/settings.js';
+import { CHAVES, lerAdValoremPadrao, lerCondicoesFtl, lerLinksRastreio } from '../lib/settings.js';
 import { exigir } from '../plugins/auth.js';
 
 const pct = z
@@ -31,6 +31,16 @@ const linkSchema = z.object({
   url: urlSchema,
   active: z.boolean().default(true),
 });
+const rastreioSchema = z.object({
+  links: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1, 'Informe o nome do link.').max(60),
+        url: urlSchema,
+      }),
+    )
+    .max(10, 'Use no máximo 10 links de rastreio.'),
+});
 const ordemSchema = z.object({ ids: z.array(z.uuid()).max(100) });
 const idParam = z.object({ id: z.uuid('Identificador inválido.') });
 
@@ -43,6 +53,7 @@ export function settingsRoutes(db: Db) {
     app.get('/api/settings', logado, async () => ({
       adValorem: await lerAdValoremPadrao(db),
       condicoesFtl: await lerCondicoesFtl(db),
+      linksRastreio: await lerLinksRastreio(db),
     }));
 
     app.put('/api/settings/ad-valorem', admin, async (req) => {
@@ -82,6 +93,25 @@ export function settingsRoutes(db: Db) {
         });
       }
       return { condicoesFtl: text };
+    });
+
+    app.put('/api/settings/tracking-links', admin, async (req) => {
+      const { links } = rastreioSchema.parse(req.body);
+      const antes = await lerLinksRastreio(db);
+      await db.setting.upsert({
+        where: { key: CHAVES.linksRastreio },
+        create: { key: CHAVES.linksRastreio, value: links },
+        update: { value: links },
+      });
+      if (JSON.stringify(antes) !== JSON.stringify(links)) {
+        await registrarAuditoria(db, req, {
+          action: 'EDITAR',
+          entity: 'configuracao',
+          entityId: CHAVES.linksRastreio,
+          details: { links: { de: antes, para: links } },
+        });
+      }
+      return { linksRastreio: links };
     });
 
     // ── Links úteis ──

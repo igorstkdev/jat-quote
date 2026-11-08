@@ -1,6 +1,6 @@
 import type { Modal } from './ad-valorem.js';
 import { formatBRL, type DecimalInput } from './money.js';
-import { formatPercentual } from './numeros.js';
+import { formatNumero, formatPercentual } from './numeros.js';
 
 /** Validade padrão das cotações (confirmada em 07/11/2026). */
 export const VALIDADE_COTACAO_DIAS = 30;
@@ -89,4 +89,71 @@ export function assuntoCotacao(
 export function linkEmailCotacao(d: DadosTextoCotacao, para?: string | null): string {
   const q = `subject=${encodeURIComponent(assuntoCotacao(d))}&body=${encodeURIComponent(textoCotacao(d))}`;
   return `mailto:${para ? encodeURIComponent(para) : ''}?${q}`;
+}
+
+export interface DadosTextoFtl {
+  numero?: number | null;
+  uf: string;
+  regiao: string;
+  localidade: 'CAPITAL' | 'INTERIOR';
+  /** Rótulo do veículo (ex.: "VAN"). */
+  veiculo: string;
+  distanciaKm: DecimalInput;
+  tarifaKm: DecimalInput;
+  total: DecimalInput;
+  adValoremPct: DecimalInput;
+  data: Date;
+  /** Condições comerciais do FTL (texto do Admin). */
+  condicoes: string;
+  observacoes?: string | null;
+}
+
+const ROTULO_LOCALIDADE = { CAPITAL: 'Capital', INTERIOR: 'Interior' } as const;
+
+/** "SP — Capital (Sudeste)" */
+export function destinoFtl(d: Pick<DadosTextoFtl, 'uf' | 'regiao' | 'localidade'>): string {
+  const regiao = d.regiao.trim();
+  return `${d.uf} — ${ROTULO_LOCALIDADE[d.localidade]}${regiao ? ` (${regiao})` : ''}`;
+}
+
+/**
+ * Texto da cotação FTL Fiat (Copiar e e-mail). Sem cliente (confirmado em 08/11/2026).
+ * A validade vem do texto das condições comerciais, editável pelo Admin.
+ */
+export function textoCotacaoFtl(d: DadosTextoFtl, opcoes: { whatsapp?: boolean } = {}): string {
+  const b = (s: string) => (opcoes.whatsapp ? `*${s}*` : s);
+  const titulo = d.numero
+    ? `COTAÇÃO FTL FIAT ${formatarNumeroCotacao(d.numero)}`
+    : 'COTAÇÃO FTL FIAT';
+  const linhas = [
+    b(titulo),
+    'JAT Transportes e Logística',
+    '',
+    `Destino: ${destinoFtl(d)}`,
+    `Veículo: ${d.veiculo}`,
+    `KM da rota: ${formatNumero(d.distanciaKm, 0, 2)} km`,
+    `Tarifa por km: ${formatBRL(d.tarifaKm)}`,
+    `Data: ${formatarDataBR(d.data)}`,
+    '',
+    b(`Valor do frete: ${formatBRL(d.total)}`),
+    '',
+    `Ad valorem de ${formatPercentual(d.adValoremPct)} sobre o valor da nota fiscal, cobrado adicionalmente.`,
+  ];
+  const cond = d.condicoes.trim();
+  if (cond) linhas.push('', b('Condições comerciais:'), cond);
+  const obs = d.observacoes?.trim();
+  if (obs) linhas.push('', `Observações: ${obs}`);
+  return linhas.join('\n');
+}
+
+/** Assunto do e-mail FTL: "Cotação FTL Fiat JQ-000123 — SP — Capital (Sudeste)" */
+export function assuntoCotacaoFtl(
+  d: Pick<DadosTextoFtl, 'numero' | 'uf' | 'regiao' | 'localidade'>,
+): string {
+  const n = d.numero ? ` ${formatarNumeroCotacao(d.numero)}` : '';
+  return `Cotação FTL Fiat${n} — ${destinoFtl(d)}`;
+}
+
+export function linkEmailCotacaoFtl(d: DadosTextoFtl): string {
+  return `mailto:?subject=${encodeURIComponent(assuntoCotacaoFtl(d))}&body=${encodeURIComponent(textoCotacaoFtl(d))}`;
 }

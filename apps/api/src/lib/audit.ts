@@ -14,7 +14,10 @@ export type AcaoAuditoria =
   | 'EXCLUIR'
   | 'DESATIVAR'
   | 'REATIVAR'
-  | 'STATUS';
+  | 'STATUS'
+  | 'IMPORTAR'
+  | 'ARQUIVAR'
+  | 'ATIVAR';
 
 export type EntidadeAuditoria =
   | 'sessao'

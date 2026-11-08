@@ -1,5 +1,9 @@
 import {
   dataValidade,
+  destinoFtl,
+  formatNumero,
+  ROTULO_VEICULO,
+  type VeiculoFtl,
   formatarDataBR,
   formatBRL,
   formatPercentual,
@@ -95,7 +99,11 @@ const CSS = `
     display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 3mm; }
 `;
 
-function cabecalho(d: DadosPdf, tipo: string, selo?: string) {
+function cabecalho(
+  d: Pick<DadosPdf, 'logoDataUrl' | 'code' | 'criadaEm'>,
+  tipo: string,
+  selo?: string,
+) {
   return `
     <div class="faixa"></div>
     <header>
@@ -195,5 +203,44 @@ export function htmlCotacaoOperacao(d: DadosPdf): string {
     <ul class="cond"><li>${esc(r.adValorem.condicao)}${esc(est)}</li></ul>
     ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}
     ${rodape(d)}
+  `);
+}
+
+export interface DadosPdfFtl {
+  code: string;
+  uf: string;
+  regiao: string;
+  localidade: 'CAPITAL' | 'INTERIOR';
+  veiculo: VeiculoFtl;
+  distanciaKm: string;
+  tarifaKm: string;
+  total: string;
+  adValoremPct: string;
+  condicoes: string;
+  criadaEm: Date;
+  geradoPor: string;
+  geradoEm: Date;
+  observacoes: string | null;
+  logoDataUrl: string;
+}
+
+/** PDF da cotação FTL Fiat (sem cliente; condições comerciais do Admin). */
+export function htmlCotacaoFtl(d: DadosPdfFtl): string {
+  const campo = (rot: string, val: string, extra = '') =>
+    `<div class="campo ${extra}"><div class="rot">${esc(rot)}</div><div class="val">${esc(val)}</div></div>`;
+  return documento(`
+    ${cabecalho(d, 'Cotação FTL Fiat')}
+    <div class="grade">
+      ${campo('Destino', destinoFtl(d), 'largo')}
+      ${campo('Veículo', ROTULO_VEICULO[d.veiculo])}
+      ${campo('KM da rota', `${formatNumero(d.distanciaKm, 0, 2)} km`)}
+      ${campo('Tarifa por km', formatBRL(d.tarifaKm))}
+      ${campo('Ad valorem', `${formatPercentual(d.adValoremPct)} sobre a nota fiscal (cobrado adicionalmente)`)}
+    </div>
+    <div class="total"><div class="rot">Valor do frete</div><div class="val">${formatBRL(d.total)}</div></div>
+    <h2>Condições comerciais</h2>
+    <div class="obs">${esc(d.condicoes)}</div>
+    ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}
+    <footer><span>JAT Transportes e Logística S/A</span><span>Gerado pelo JAT Quote em ${dataHora(d.geradoEm)} por ${esc(d.geradoPor)}</span></footer>
   `);
 }

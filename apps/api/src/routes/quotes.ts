@@ -3,9 +3,10 @@ import { z } from 'zod';
 import type { Db } from '../db.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { diferencas, registrarAuditoria } from '../lib/audit.js';
-import { conflito, naoEncontrado } from '../lib/errors.js';
+import { conflito, naoEncontrado, requisicaoInvalida, semPermissao } from '../lib/errors.js';
 import { gerarPdfCotacao } from '../lib/pdf.js';
-import { prepararSpot, quoteDto, spotSchema } from '../lib/quotes.js';
+import { INCLUIR_COTACAO, prepararSpot, quoteDto, spotSchema } from '../lib/quotes.js';
+import { lerCondicoesFtl } from '../lib/settings.js';
 import { exigir } from '../plugins/auth.js';
 
 const idParam = z.object({ id: z.uuid('Identificador inválido.') });
@@ -16,11 +17,13 @@ const listaQuery = z.object({
 });
 const pdfQuery = z.object({ visao: z.enum(['cliente', 'operacao']).default('cliente') });
 
-const incluir = {
-  createdBy: { select: { name: true, username: true } },
-  updatedBy: { select: { name: true, username: true } },
-  client: { select: { email: true, active: true } },
-} satisfies Prisma.QuoteInclude;
+const incluir = INCLUIR_COTACAO;
+const statusBody = z.object({
+  status: z.enum(['PENDENTE', 'APROVADA', 'DECLINADA', 'RECUSADA'], {
+    error: 'Escolha o novo status.',
+  }),
+  note: z.string().trim().max(500, 'Comentário: use no máximo 500 caracteres.').nullish(),
+});
 
 export function quoteRoutes(db: Db) {
   return async (app: FastifyInstance) => {
@@ -89,6 +92,11 @@ export function quoteRoutes(db: Db) {
     app.patch('/api/quotes/:id', logado, async (req) => {
       const { id } = idParam.parse(req.params);
       const antes = await buscar(id);
+      if (antes.modal === 'FTL') {
+        throw requisicaoInvalida(
+          'Cotação FTL não é editada por aqui. Faça uma nova na calculadora FTL.',
+        );
+      }
       if (antes.status === 'APROVADA') {
         throw conflito(
           'Cotação aprovada não pode ser editada. Use "Duplicar como nova" para fazer uma nova versão.',
@@ -118,6 +126,71 @@ export function quoteRoutes(db: Db) {
         });
       }
       return { quote: quoteDto(depois) };
+    });
+
+    /**
+     * Alteração de status (CLAUDE.md §3.5): qualquer usuário muda uma cotação que não está
+     * Aprovada; tirar de Aprovada é só Admin. Tudo fica registrado (quem, quando, de → para).
+     */
+    app.post('/api/quotes/:id/status', logado, async (req) => {
+      const { id } = idParam.parse(req.params);
+      const { status, note } = statusBody.parse(req.body);
+      const antes = await buscar(id);
+      const u = req.user!;
+      if (antes.status === status) {
+        throw requisicaoInvalida('A cotação já está com este status.', 'status');
+      }
+      if (antes.status === 'APROVADA' && u.role !== 'ADMIN') {
+        throw semPermissao();
+      }
+      const quote = await db.$transaction(async (tx) => {
+        const q = await tx.quote.update({
+          where: { id },
+          data: { status, updatedById: u.id },
+          include: incluir,
+        });
+        await tx.quoteStatusChange.create({
+          data: {
+            quoteId: id,
+            fromStatus: antes.status,
+            toStatus: status,
+            userId: u.id,
+            note: note || null,
+          },
+        });
+        await registrarAuditoria(tx, req, {
+          action: 'STATUS',
+          entity: 'cotacao',
+          entityId: id,
+          details: {
+            numero: q.number,
+            status: { de: antes.status, para: status },
+            ...(note ? { nota: note } : {}),
+          },
+        });
+        return q;
+      });
+      return { quote: quoteDto(quote) };
+    });
+
+    app.get('/api/quotes/:id/status-history', logado, async (req) => {
+      const { id } = idParam.parse(req.params);
+      await buscar(id);
+      const changes = await db.quoteStatusChange.findMany({
+        where: { quoteId: id },
+        orderBy: { at: 'desc' },
+        include: { user: { select: { name: true, username: true } } },
+      });
+      return {
+        changes: changes.map((c) => ({
+          id: c.id,
+          from: c.fromStatus,
+          to: c.toStatus,
+          note: c.note,
+          at: c.at,
+          user: c.user.name,
+        })),
+      };
     });
 
     /** "Duplicar como nova": nova cotação Pendente com os mesmos dados, recalculada. */
@@ -179,8 +252,9 @@ export function quoteRoutes(db: Db) {
       const { id } = idParam.parse(req.params);
       const { visao } = pdfQuery.parse(req.query);
       const q = await buscar(id);
-      const pdf = await gerarPdfCotacao(q, visao, req.user!.name);
-      const nome = `cotacao-${quoteDto(q).code}${visao === 'operacao' ? '-operacao' : ''}.pdf`;
+      const condicoes = q.modal === 'FTL' ? await lerCondicoesFtl(db) : '';
+      const pdf = await gerarPdfCotacao(q, visao, req.user!.name, condicoes);
+      const nome = `cotacao-${quoteDto(q).code}${visao === 'operacao' && q.modal !== 'FTL' ? '-operacao' : ''}.pdf`;
       return reply
         .header('Content-Type', 'application/pdf')
         .header('Content-Disposition', `inline; filename="${nome}"`)

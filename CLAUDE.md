@@ -80,6 +80,12 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - Gestão: criar com vigência (início/fim), editar (gera histórico automático), ativar/desativar, duplicar, importar/exportar CSV, histórico completo por tarifa.
 - **Vigências sobrepostas são proibidas** (mesma rota + companhia), validado no servidor.
 - Tela do app atual (referência): cartões com Total de Tarifas e totais por companhia (GOL, AZUL, LATAM); "Links de Rastreio" (Rastreio Gollog, Rastreio Azul Cargo); tabela com busca por aeroporto/CIA, filtro de status, colunas Rota, CIA, Urgente, Rápido, Econômico, Status, Versão e Ações; botões Importar CSV, Exportar CSV, Nova Tarifa e "Excluir Tudo" (somente Admin, com confirmação forte).
+- Decisões de 08/11/2026:
+  - **Vigência: data final opcional** (sem data final = vale até ser substituída). A calculadora usa só tarifas **ativas e vigentes na data de hoje**.
+  - **"Excluir Tudo" = arquivar**: as tarifas somem das telas e da calculadora, mas histórico e auditoria continuam no banco.
+  - **Links de rastreio** (editáveis pelo Admin em Configurações): Rastreio Gollog https://servicos.gollog.com.br/app/site/tracking e Rastreio Azul Cargo https://www.azullogistica.com.br/Rastreio.
+  - **Layout do CSV = o do app atual**: separador `;`, colunas `Origem;Destino;Companhia;Urgente R$/Kg;Urgente Min;Rápido R$/Kg;Rápido Min;Econômico R$/Kg;Econômico Min;Status;Versão;Vigência Início;Vigência Fim;Observações`. A tarifa tem um campo Observações.
+  - Integrações: na calculadora rápida, "Usar no Frete Spot" (preenche o Custo Aéreo com a opção escolhida) e "Usar peso da Cubagem".
 
 ### 3.4 FTL Fiat
 
@@ -96,10 +102,15 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
   - **Relatório**: histórico de cotações FTL com status.
 - A calculadora usa a tabela **ativa** de UF + Tipo de localidade. Edição gera nova versão (histórico).
 - CRUD, histórico de alterações, importar/exportar CSV, histórico de cotações FTL com status.
+- **Cotação FTL não tem cliente** (confirmado em 08/11/2026). Rota = "Tabela FTL: UF Capital/Interior".
+- Só uma tabela **ativa** por UF + Tipo de localidade. "Excluir Tudo" = arquivar (como nas tarifas aéreas).
+- CSV no mesmo estilo do de tarifas aéreas: `UF;Região;Tipo;Utilitário R$/Km;VAN R$/Km;1.5T R$/Km;Ad Valorem %;Status;Versão;Observações`.
 
 ### 3.5 Status das cotações
 
 Pendente (azul), Aprovada (verde), Declinada (laranja: cliente recusou por preço/prazo), Recusada (vermelho: inviável operacionalmente). Toda mudança de status é registrada (quem, quando, de → para).
+
+- **Quem altera** (08/11/2026): qualquer usuário muda o status de uma cotação que **não está Aprovada**; tirar uma cotação de **Aprovada** é **só Admin**. Vale para Spot e FTL.
 
 ### 3.6 Relatório Spot
 

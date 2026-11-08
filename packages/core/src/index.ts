@@ -69,3 +69,15 @@ export {
   linkEmailCotacao,
 } from './cotacao.js';
 export type { DadosTextoCotacao } from './cotacao.js';
+export { destinoFtl, textoCotacaoFtl, assuntoCotacaoFtl, linkEmailCotacaoFtl } from './cotacao.js';
+export type { DadosTextoFtl } from './cotacao.js';
+export { SEPARADOR_CSV, lerCsv, escreverCsv, chaveCabecalho } from './csv.js';
+export {
+  hojeIso,
+  lerData,
+  dataIsoParaBR,
+  validarVigencia,
+  vigenciasSobrepostas,
+  vigenteEm,
+} from './datas.js';
+export type { DataIso, Vigencia } from './datas.js';

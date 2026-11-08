@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { seed } from '../src/seed.js';
-import { CONDICOES_FTL_PADRAO } from '../src/lib/settings.js';
+import { CONDICOES_FTL_PADRAO, LINKS_RASTREIO_PADRAO } from '../src/lib/settings.js';
 import {
   criarAppTeste,
   criarDbTeste,
@@ -37,7 +37,33 @@ describe('configurações', () => {
     expect(res.json()).toEqual({
       adValorem: { AEREO: '0.47', RODOVIARIO: '0.15' },
       condicoesFtl: CONDICOES_FTL_PADRAO,
+      linksRastreio: LINKS_RASTREIO_PADRAO,
     });
+  });
+
+  it('Admin edita os links de rastreio; Operacional não', async () => {
+    const links = [{ name: 'Rastreio LATAM', url: 'https://www.latamcargo.com/' }];
+    const negado = await req(app, oper, {
+      method: 'PUT',
+      url: '/api/settings/tracking-links',
+      payload: { links },
+    });
+    expect(negado.statusCode).toBe(403);
+    const ok = await req(app, admin, {
+      method: 'PUT',
+      url: '/api/settings/tracking-links',
+      payload: { links },
+    });
+    expect(ok.json().linksRastreio).toEqual(links);
+    expect(
+      (await req(app, oper, { method: 'GET', url: '/api/settings' })).json().linksRastreio,
+    ).toEqual(links);
+    const inval = await req(app, admin, {
+      method: 'PUT',
+      url: '/api/settings/tracking-links',
+      payload: { links: [{ name: 'X', url: 'ftp://x' }] },
+    });
+    expect(inval.statusCode).toBe(400);
   });
 
   it('Admin altera ad valorem padrão (aceita vírgula); Operacional não', async () => {

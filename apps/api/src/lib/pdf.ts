@@ -2,7 +2,13 @@ import { readFileSync } from 'node:fs';
 import { formatarCidade, formatarNumeroCotacao } from '@jat/core';
 import { chromium, type Browser } from 'playwright-core';
 import type { Quote } from '../generated/prisma/client.js';
-import { htmlCotacaoCliente, htmlCotacaoOperacao, type DadosPdf } from './pdf-templates.js';
+import {
+  htmlCotacaoCliente,
+  htmlCotacaoFtl,
+  htmlCotacaoOperacao,
+  type DadosPdf,
+  type DadosPdfFtl,
+} from './pdf-templates.js';
 import { resultadoGravado } from './quotes.js';
 
 /** Logo embutida no HTML (o PDF não depende de rede). */
@@ -44,7 +50,10 @@ export async function htmlParaPdf(html: string): Promise<Buffer> {
   }
 }
 
-type QuoteParaPdf = Quote & { createdBy?: { name: string } | null };
+type QuoteParaPdf = Quote & {
+  createdBy?: { name: string } | null;
+  ftlRate?: { region: string } | null;
+};
 
 export function dadosPdf(q: QuoteParaPdf, geradoPor: string): DadosPdf {
   return {
@@ -64,11 +73,34 @@ export function dadosPdf(q: QuoteParaPdf, geradoPor: string): DadosPdf {
   };
 }
 
+export function dadosPdfFtl(q: QuoteParaPdf, geradoPor: string, condicoes: string): DadosPdfFtl {
+  return {
+    code: formatarNumeroCotacao(q.number),
+    uf: q.destUf ?? '—',
+    regiao: q.ftlRate?.region ?? '',
+    localidade: q.ftlLocality ?? 'CAPITAL',
+    veiculo: q.vehicle ?? 'VAN',
+    distanciaKm: q.distanceKm?.toString() ?? '0',
+    tarifaKm: q.ratePerKm?.toString() ?? '0',
+    total: q.total.toString(),
+    adValoremPct: q.adValoremPct.toString(),
+    condicoes,
+    criadaEm: q.createdAt,
+    geradoPor,
+    geradoEm: new Date(),
+    observacoes: q.notes,
+    logoDataUrl: logoDataUrl(),
+  };
+}
+
 export async function gerarPdfCotacao(
   q: QuoteParaPdf,
   visao: 'cliente' | 'operacao',
   geradoPor: string,
+  condicoesFtl = '',
 ): Promise<Buffer> {
+  if (q.modal === 'FTL')
+    return htmlParaPdf(htmlCotacaoFtl(dadosPdfFtl(q, geradoPor, condicoesFtl)));
   const d = dadosPdf(q, geradoPor);
   return htmlParaPdf(visao === 'operacao' ? htmlCotacaoOperacao(d) : htmlCotacaoCliente(d));
 }

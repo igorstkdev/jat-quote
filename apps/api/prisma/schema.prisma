@@ -256,12 +256,15 @@ model AirRate {
   version     Int       @default(1)
 
   // Os 3 níveis são opcionais (CLAUDE.md §3.3)
-  urgentPerKg  Decimal? @map("urgent_per_kg") @db.Decimal(12, 4)
-  urgentMin    Decimal? @map("urgent_min") @db.Decimal(14, 2)
-  fastPerKg    Decimal? @map("fast_per_kg") @db.Decimal(12, 4)
-  fastMin      Decimal? @map("fast_min") @db.Decimal(14, 2)
-  economyPerKg Decimal? @map("economy_per_kg") @db.Decimal(12, 4)
-  economyMin   Decimal? @map("economy_min") @db.Decimal(14, 2)
+  urgentPerKg  Decimal?  @map("urgent_per_kg") @db.Decimal(12, 4)
+  urgentMin    Decimal?  @map("urgent_min") @db.Decimal(14, 2)
+  fastPerKg    Decimal?  @map("fast_per_kg") @db.Decimal(12, 4)
+  fastMin      Decimal?  @map("fast_min") @db.Decimal(14, 2)
+  economyPerKg Decimal?  @map("economy_per_kg") @db.Decimal(12, 4)
+  economyMin   Decimal?  @map("economy_min") @db.Decimal(14, 2)
+  notes        String?
+  /// "Excluir Tudo" arquiva: some das telas e da calculadora, mas o histórico continua.
+  archivedAt   DateTime? @map("archived_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -289,18 +292,20 @@ model AirRateHistory {
 }
 
 model FtlRate {
-  id           String   @id @default(uuid()) @db.Uuid
-  uf           String   @db.Char(2)
+  id           String    @id @default(uuid()) @db.Uuid
+  uf           String    @db.Char(2)
   region       String
   locality     Locality
-  perKmUtility Decimal  @map("per_km_utility") @db.Decimal(12, 4)
-  perKmVan     Decimal  @map("per_km_van") @db.Decimal(12, 4)
-  perKm15t     Decimal  @map("per_km_15t") @db.Decimal(12, 4)
-  adValoremPct Decimal  @map("ad_valorem_pct") @db.Decimal(9, 4)
-  active       Boolean  @default(true)
-  version      Int      @default(1)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  perKmUtility Decimal   @map("per_km_utility") @db.Decimal(12, 4)
+  perKmVan     Decimal   @map("per_km_van") @db.Decimal(12, 4)
+  perKm15t     Decimal   @map("per_km_15t") @db.Decimal(12, 4)
+  adValoremPct Decimal   @map("ad_valorem_pct") @db.Decimal(9, 4)
+  active       Boolean   @default(true)
+  version      Int       @default(1)
+  notes        String?
+  archivedAt   DateTime? @map("archived_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   history FtlRateHistory[]
   quotes  Quote[]
