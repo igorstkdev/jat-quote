@@ -25,7 +25,8 @@
     "db:migrate": "npm run db:migrate -w @jat/api",
     "db:generate": "npm run db:generate -w @jat/api",
     "test:core": "npm run test:coverage -w @jat/core",
-    "db:seed": "npm run db:seed -w @jat/api"
+    "db:seed": "npm run db:seed -w @jat/api",
+    "admin:recuperar-acesso": "npm run admin:recuperar-acesso -w @jat/api --"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

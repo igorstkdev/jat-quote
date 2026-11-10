@@ -132,6 +132,10 @@ A execução como serviço do Windows é configurada na Fase 6.
 - Senhas: mínimo de 8 caracteres, com letras e números. Usuários nunca são excluídos, apenas desativados.
 - Perfis: **Admin** (tudo) e **Operacional** (cotações, tarifas, relatórios, clientes). A permissão
   "Pode editar tarifas" libera o cadastro de tarifas. Todas as permissões são checadas no servidor.
+- **Esqueceu a senha do Admin?** No servidor, rode `npm run admin:recuperar-acesso` (usuário
+  `admin`) ou `npm run admin:recuperar-acesso -- <usuário>` para outro Admin. O comando mostra uma
+  senha temporária uma única vez, exige a troca no próximo acesso, desbloqueia o usuário, encerra as
+  sessões abertas e registra na auditoria. A senha de usuários Operacionais é redefinida pelo Admin.
 - Toda alteração fica na **Auditoria** (Administração → Auditoria), com o antes e o depois.
 - Atalhos: **Ctrl+K** abre a busca de telas e ações; **Ctrl+B** recolhe o menu.
 

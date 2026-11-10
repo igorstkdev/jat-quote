@@ -13,7 +13,9 @@
     "db:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "db:seed": "node --conditions=@jat/source --import tsx src/seed-cli.ts",
-    "db:seed:prod": "node dist/seed-cli.js"
+    "db:seed:prod": "node dist/seed-cli.js",
+    "admin:recuperar-acesso": "node --conditions=@jat/source --import tsx src/recuperar-acesso-cli.ts",
+    "admin:recuperar-acesso:prod": "node dist/recuperar-acesso-cli.js"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",
