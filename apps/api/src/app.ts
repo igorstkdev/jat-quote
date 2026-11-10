@@ -18,6 +18,7 @@ import { userRoutes } from './routes/users.js';
 import { quoteRoutes } from './routes/quotes.js';
 import { airRateRoutes } from './routes/air-rates.js';
 import { ftlRoutes } from './routes/ftl.js';
+import { reportRoutes } from './routes/reports.js';
 import { fecharNavegadorPdf } from './lib/pdf.js';
 
 // Mensagens padrão do Zod em português.
@@ -96,6 +97,7 @@ export async function buildApp({
   await app.register(quoteRoutes(db));
   await app.register(airRateRoutes(db));
   await app.register(ftlRoutes(db));
+  await app.register(reportRoutes(db));
   app.addHook('onClose', fecharNavegadorPdf);
 
   if (existsSync(webDist)) {

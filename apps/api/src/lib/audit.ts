@@ -16,6 +16,7 @@ export type AcaoAuditoria =
   | 'REATIVAR'
   | 'STATUS'
   | 'IMPORTAR'
+  | 'EXPORTAR'
   | 'ARQUIVAR'
   | 'ATIVAR';
 

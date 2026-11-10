@@ -81,3 +81,4 @@ export {
   vigenteEm,
 } from './datas.js';
 export type { DataIso, Vigencia } from './datas.js';
+export { taxaConversao, mesDe, mesesEntre, rotuloMes } from './indicadores.js';

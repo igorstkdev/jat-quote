@@ -46,6 +46,10 @@ const ACOES: Record<
   DESATIVAR: { rotulo: 'Desativou', variante: 'destructive' },
   REATIVAR: { rotulo: 'Reativou', variante: 'success' },
   STATUS: { rotulo: 'Mudou status', variante: 'default' },
+  ATIVAR: { rotulo: 'Ativou', variante: 'success' },
+  IMPORTAR: { rotulo: 'Importou', variante: 'default' },
+  EXPORTAR: { rotulo: 'Exportou', variante: 'outline' },
+  ARQUIVAR: { rotulo: 'Arquivou', variante: 'destructive' },
 };
 
 const ROTULO_CAMPO: Record<string, string> = {

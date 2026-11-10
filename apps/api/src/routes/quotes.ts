@@ -173,6 +173,28 @@ export function quoteRoutes(db: Db) {
       return { quote: quoteDto(quote) };
     });
 
+    /** Exclusão (somente Admin) = soft delete: some das telas, continua no banco e na auditoria. */
+    app.delete('/api/quotes/:id', { preHandler: exigir({ admin: true }) }, async (req, reply) => {
+      const { id } = idParam.parse(req.params);
+      const q = await buscar(id);
+      await db.quote.update({
+        where: { id },
+        data: { deletedAt: new Date(), deletedById: req.user!.id },
+      });
+      await registrarAuditoria(db, req, {
+        action: 'EXCLUIR',
+        entity: 'cotacao',
+        entityId: id,
+        details: {
+          numero: q.number,
+          cliente: q.clientName,
+          status: q.status,
+          total: q.total.toString(),
+        },
+      });
+      return reply.code(204).send();
+    });
+
     app.get('/api/quotes/:id/status-history', logado, async (req) => {
       const { id } = idParam.parse(req.params);
       await buscar(id);
