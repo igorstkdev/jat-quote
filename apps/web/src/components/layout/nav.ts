@@ -75,8 +75,6 @@ export const NAV: GrupoNav[] = [
         rotulo: 'Dashboard',
         icone: BarChart3,
         palavras: 'kpi gráficos conversão',
-        emBreve: true,
-        fase: 5,
         descricao: 'Indicadores, conversão, volume mensal e principais rotas.',
       },
       {
@@ -84,8 +82,6 @@ export const NAV: GrupoNav[] = [
         rotulo: 'Relatório Spot',
         icone: FileText,
         palavras: 'excel status cotações',
-        emBreve: true,
-        fase: 5,
         descricao: 'Filtros, estatísticas, visão cliente/operação e exportação Excel.',
       },
     ],

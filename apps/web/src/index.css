@@ -45,6 +45,9 @@
   --cia-gol: oklch(0.7 0.18 50);
   --cia-azul: oklch(0.5 0.17 255);
   --cia-latam: oklch(0.5 0.2 15);
+  --modal-aereo: oklch(0.5 0.15 262);
+  --modal-rodoviario: oklch(0.72 0.16 52);
+  --modal-ftl: oklch(0.62 0.12 185);
 
   --success: var(--status-aprovada);
   --sidebar: oklch(0.975 0.003 264);
@@ -85,6 +88,9 @@
   --cia-gol: oklch(0.76 0.16 55);
   --cia-azul: oklch(0.68 0.15 250);
   --cia-latam: oklch(0.66 0.19 15);
+  --modal-aereo: oklch(0.68 0.14 258);
+  --modal-rodoviario: oklch(0.77 0.15 58);
+  --modal-ftl: oklch(0.72 0.11 185);
   --success: var(--status-aprovada);
   --sidebar: oklch(0.175 0.013 264);
   --destaque-mkup: oklch(0.76 0.13 280);
@@ -133,6 +139,9 @@
   --color-cia-gol: var(--cia-gol);
   --color-cia-azul: var(--cia-azul);
   --color-cia-latam: var(--cia-latam);
+  --color-modal-aereo: var(--modal-aereo);
+  --color-modal-rodoviario: var(--modal-rodoviario);
+  --color-modal-ftl: var(--modal-ftl);
 }
 
 @layer base {

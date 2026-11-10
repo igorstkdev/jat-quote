@@ -7,6 +7,7 @@ import {
   useTable,
   type ColumnDef,
   type RowData,
+  type SortingState,
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -38,6 +39,11 @@ interface Props<T extends RowData> {
   vazio?: ReactNode;
   linhaClassName?: (linha: T) => string | undefined;
   rotulo: string;
+  /** Ordenação feita no servidor (paginação): a tabela só mostra e avisa a troca. */
+  ordenacaoServidor?: {
+    valor: SortingState;
+    onChange: (s: SortingState) => void;
+  };
 }
 
 /** Tabela com ordenação por coluna (TanStack Table v9), skeleton e estado vazio. */
@@ -48,11 +54,21 @@ export function DataTable<T extends RowData>({
   vazio,
   linhaClassName,
   rotulo,
+  ordenacaoServidor,
 }: Props<T>) {
   const table = useTable({
     features: recursosTabela,
     columns: colunas,
     data: dados ?? [],
+    ...(ordenacaoServidor
+      ? {
+          manualSorting: true,
+          enableSortingRemoval: false,
+          state: { sorting: ordenacaoServidor.valor },
+          onSortingChange: (u) =>
+            ordenacaoServidor.onChange(typeof u === 'function' ? u(ordenacaoServidor.valor) : u),
+        }
+      : {}),
   });
 
   const headers = table.getHeaderGroups();

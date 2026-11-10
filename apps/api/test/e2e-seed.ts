@@ -147,6 +147,104 @@ try {
       ftl('PR', 'Sul', 'CAPITAL', ['3.05', '3.75', '4.65'], '0.5', false),
     ],
   });
+
+  // Cotações de exemplo (Fase 5): Spot e FTL nos últimos 6 meses, para Relatório e Dashboard.
+  const [admin, bruno] = await Promise.all([
+    db.user.findUniqueOrThrow({ where: { username: 'admin.e2e' } }),
+    db.user.findUniqueOrThrow({ where: { username: 'bruno.lima' } }),
+  ]);
+  const clientes = await db.client.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+  const sp = await db.ftlRate.findFirstOrThrow({ where: { uf: 'SP', locality: 'CAPITAL' } });
+  const rotas = [
+    ['São Paulo', 'SP', 'Salvador', 'BA'],
+    ['Campinas', 'SP', 'Recife', 'PE'],
+    ['Belo Horizonte', 'MG', 'Curitiba', 'PR'],
+    ['São Paulo', 'SP', 'Manaus', 'AM'],
+    ['Betim', 'MG', 'Rio de Janeiro', 'RJ'],
+    ['Guarulhos', 'SP', 'Fortaleza', 'CE'],
+  ] as const;
+  const status = ['APROVADA', 'PENDENTE', 'DECLINADA', 'APROVADA', 'RECUSADA', 'PENDENTE'] as const;
+  const agora = Date.now();
+  const dia = 86_400_000;
+  const c2 = (n: number) => n.toFixed(2);
+  for (let i = 0; i < 26; i++) {
+    const aereo = i % 3 === 0;
+    const [oc, ou, dc, du] = rotas[i % 4 === 3 ? 0 : (i * 7) % rotas.length]!;
+    const custo = 300 + ((i * 137) % 900);
+    const markup = [30, 45, 70][i % 3]!;
+    const pedagio = aereo ? 0 : 50 + ((i * 31) % 150);
+    const mkup = (custo * markup) / 100;
+    const st = status[i % status.length]!;
+    const criada = new Date(agora - Math.round(i * 6.7 * dia) - (2 + (i % 5)) * 3_600_000);
+    const autor = i % 2 ? bruno.id : admin.id;
+    const q = await db.quote.create({
+      data: {
+        modal: aereo ? 'AEREO' : 'RODOVIARIO',
+        status: st,
+        clientId: clientes[i % clientes.length]!.id,
+        clientName: clientes[i % clientes.length]!.name,
+        originCity: oc,
+        originUf: ou,
+        destCity: dc,
+        destUf: du,
+        ...(aereo
+          ? { costPickup: c2(custo * 0.2), costAir: c2(custo * 0.6), costDelivery: c2(custo * 0.2) }
+          : { costRoad: c2(custo) }),
+        toll: c2(pedagio),
+        markupPct: String(markup),
+        adValoremPct: aereo ? '0.47' : '0.15',
+        costTotal: c2(custo),
+        markupTotal: c2(mkup),
+        subtotal: c2(custo + mkup),
+        total: c2(custo + mkup + pedagio),
+        notes: i === 0 ? 'Coleta agendada para 8h.' : null,
+        createdById: autor,
+        createdAt: criada,
+        updatedAt: criada,
+      },
+    });
+    await db.quoteStatusChange.create({
+      data: { quoteId: q.id, toStatus: 'PENDENTE', userId: autor, at: criada },
+    });
+    if (st !== 'PENDENTE') {
+      await db.quoteStatusChange.create({
+        data: {
+          quoteId: q.id,
+          fromStatus: 'PENDENTE',
+          toStatus: st,
+          userId: admin.id,
+          at: new Date(criada.getTime() + 3_600_000),
+        },
+      });
+    }
+  }
+  for (const [i, km] of [180, 420, 95, 310].entries()) {
+    const criada = new Date(agora - (i * 23 + 2) * dia);
+    const total = c2(km * 3.6);
+    const q = await db.quote.create({
+      data: {
+        modal: 'FTL',
+        status: i % 2 ? 'APROVADA' : 'PENDENTE',
+        destUf: 'SP',
+        ftlRateId: sp.id,
+        ftlRateVersion: sp.version,
+        ftlLocality: 'CAPITAL',
+        vehicle: 'VAN',
+        distanceKm: String(km),
+        ratePerKm: '3.6',
+        adValoremPct: '0.5',
+        costTotal: total,
+        subtotal: total,
+        total,
+        createdById: admin.id,
+        createdAt: criada,
+        updatedAt: criada,
+      },
+    });
+    await db.quoteStatusChange.create({
+      data: { quoteId: q.id, toStatus: 'PENDENTE', userId: admin.id, at: criada },
+    });
+  }
 } finally {
   await db.$disconnect();
 }

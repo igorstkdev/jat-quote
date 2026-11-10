@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useLocation, useNavigate } from 'react-router';
 import { CityCombobox } from '@/components/city-combobox';
 import { ClientCombobox } from '@/components/client-combobox';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -81,8 +82,16 @@ export default function SpotPage() {
   const [confirmarLimpar, setConfirmarLimpar] = useState(false);
   const [erroServidor, setErroServidor] = useState<ApiError | null>(null);
 
+  // "Editar" vindo do Relatório: abre a cotação pedida no lugar do rascunho.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [abrirId] = useState(() => (location.state as { abrir?: string } | null)?.abrir);
+  useEffect(() => {
+    if (abrirId) void navigate('.', { replace: true, state: null });
+  }, [abrirId, navigate]);
+
   // Rascunho que estava editando uma cotação salva: recarrega a cotação.
-  const editandoInicial = inicial?.editandoId;
+  const editandoInicial = abrirId ?? inicial?.editandoId;
   const carregada = useQuery({
     queryKey: ['quote', editandoInicial],
     queryFn: async () =>
@@ -95,6 +104,11 @@ export default function SpotPage() {
     setSincronizado(true);
     setCotacao(carregada.data);
     setBase(formDaCotacao(carregada.data));
+    if (abrirId) setForm(formDaCotacao(carregada.data));
+  }
+  if (carregada.isError && abrirId && !sincronizado) {
+    setSincronizado(true);
+    toast.error(carregada.error.message);
   }
 
   useEffect(() => {

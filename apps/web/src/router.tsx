@@ -16,6 +16,8 @@ const SpotPage = lazy(() => import('@/pages/spot'));
 const CubagemPage = lazy(() => import('@/pages/cubagem'));
 const TarifasAereasPage = lazy(() => import('@/pages/tarifas-aereas'));
 const FtlPage = lazy(() => import('@/pages/ftl'));
+const RelatoriosPage = lazy(() => import('@/pages/relatorios'));
+const DashboardPage = lazy(() => import('@/pages/dashboard'));
 const MinhaContaPage = lazy(() => import('@/pages/minha-conta'));
 const UsuariosPage = lazy(() => import('@/pages/admin/usuarios'));
 const ConfiguracoesPage = lazy(() => import('@/pages/admin/configuracoes'));
@@ -89,6 +91,8 @@ export const router = createBrowserRouter([
       { path: 'tarifas-aereas', element: <TarifasAereasPage /> },
       { path: 'ftl', element: <FtlPage /> },
       { path: 'ftl/:aba', element: <FtlPage /> },
+      { path: 'relatorios', element: <RelatoriosPage /> },
+      { path: 'dashboard', element: <DashboardPage /> },
       { path: 'clientes', element: <ClientesPage /> },
       { path: 'minha-conta', element: <MinhaContaPage /> },
       {

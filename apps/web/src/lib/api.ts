@@ -251,3 +251,54 @@ export interface MudancaStatus {
   at: string;
   user: string;
 }
+
+// ── Relatórios e Dashboard (Fase 5) ──
+
+export type ModalCotacao = Cotacao['modal'];
+
+export interface EstatisticasCotacoes {
+  count: number;
+  value: string;
+  byStatus: { status: StatusCotacao; count: number; value: string }[];
+}
+
+export interface RelatorioSpot {
+  quotes: Cotacao[];
+  page: number;
+  pageSize: number;
+  stats: EstatisticasCotacoes;
+}
+
+export type PontoMensal = { month: string } & Record<ModalCotacao, number> &
+  Record<`${ModalCotacao}_value`, string>;
+
+export interface DadosDashboard {
+  period: { from: string | null; to: string | null; today: string };
+  kpis: {
+    total: number;
+    today: number;
+    approved: number;
+    declined: number;
+    quotedValue: string;
+    approvedValue: string;
+    conversionPct: string | null;
+  };
+  byStatus: EstatisticasCotacoes['byStatus'];
+  monthly: PontoMensal[];
+  topRoutes: { route: string; ftl: boolean; count: number; value: string }[];
+  recent: {
+    id: string;
+    at: string;
+    user: string;
+    from: StatusCotacao | null;
+    to: StatusCotacao;
+    quote: {
+      id: string;
+      code: string;
+      modal: ModalCotacao;
+      client: string | null;
+      route: string;
+      total: string;
+    };
+  }[];
+}

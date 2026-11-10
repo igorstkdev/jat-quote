@@ -125,6 +125,24 @@ A execução como serviço do Windows é configurada na Fase 6.
   tirar uma cotação de Aprovada é só do Admin. Cada mudança fica registrada.
 - Os links de rastreio (Gollog, Azul Cargo) são editados em Administração → Configurações.
 
+## Relatório e Dashboard (Fase 5)
+
+- **Relatório Spot** (`/relatorios`): filtros combináveis (nº da cotação, cliente, origem ou
+  destino; período; status; modal) guardados no endereço da página, então o link pode ser
+  compartilhado. Mostra quantidade e valor no total e por status (clique num status para filtrar).
+- Por cotação: **Visão cliente** (sem custos internos) e **Visão operação** (componentes com MKUP),
+  alterar status, editar no Frete Spot (bloqueado se Aprovada), duplicar como nova, PDF e, só para o
+  Admin, **excluir**. A exclusão tira a cotação das telas, mas ela continua no banco e na auditoria.
+- **Exportar Excel**: as cotações filtradas, com cabeçalho formatado, valores numéricos em R$,
+  linha de totais e uma aba "Resumo" com os filtros e os totais por status. É de uso interno
+  (inclui custos e markup). Cada exportação fica registrada na auditoria.
+- **Dashboard** (`/dashboard`): Spot e FTL juntos, com filtro de período (padrão: últimos 12 meses)
+  e de modal. KPIs: total de cotações, cotações hoje, aprovadas, valor cotado, valor aprovado e
+  **conversão = Aprovadas ÷ (Aprovadas + Declinadas)** (Recusadas e Pendentes não entram).
+  Gráficos: volume mensal por modal (quantidade ou valor), distribuição por status, Top 10 rotas
+  (por quantidade de cotações) e atividade recente.
+- O período usa a **data de criação** da cotação, no fuso de São Paulo.
+
 ## Acesso e segurança
 
 - Login por usuário e senha (argon2id). A sessão expira após **12 horas sem uso** (`SESSION_TTL_HOURS`).
