@@ -71,7 +71,7 @@ export {
 export type { DadosTextoCotacao } from './cotacao.js';
 export { destinoFtl, textoCotacaoFtl, assuntoCotacaoFtl, linkEmailCotacaoFtl } from './cotacao.js';
 export type { DadosTextoFtl } from './cotacao.js';
-export { SEPARADOR_CSV, lerCsv, escreverCsv, chaveCabecalho } from './csv.js';
+export { SEPARADOR_CSV, lerCsv, lerCsvComLinhas, escreverCsv, chaveCabecalho } from './csv.js';
 export {
   hojeIso,
   lerData,

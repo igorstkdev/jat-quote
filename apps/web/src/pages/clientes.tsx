@@ -1,11 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, MoreHorizontal, Pencil, Plus, Power, RotateCcw, Search, X } from 'lucide-react';
+import {
+  Building2,
+  Download,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Power,
+  RotateCcw,
+  Search,
+  Upload,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { ClienteDialog } from '@/components/cliente-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { DataTable, type Coluna } from '@/components/data-table';
+import { ImportarCsvDialog } from '@/components/tarifas/importar-csv';
 import { EmptyState, Page, PageHeader, Segmentado } from '@/components/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,6 +46,7 @@ export default function ClientesPage() {
   const termo = useDebounce(busca.trim(), 200);
   const [editando, setEditando] = useState<Cliente | 'novo' | null>(null);
   const [desativar, setDesativar] = useState<Cliente | null>(null);
+  const [importar, setImportar] = useState(false);
 
   // Ctrl+K → "Novo cliente" abre o formulário.
   const alvo = editando ?? (params.get('novo') === '1' ? 'novo' : null);
@@ -178,11 +191,31 @@ export default function ClientesPage() {
         titulo="Clientes"
         descricao="Clientes desativados não aparecem em novas cotações, mas continuam no histórico."
         acoes={
-          <Button onClick={() => setEditando('novo')}>
-            <Plus />
-            Novo cliente
-          </Button>
+          <>
+            {admin && (
+              <Button variant="outline" onClick={() => setImportar(true)}>
+                <Upload /> Importar CSV
+              </Button>
+            )}
+            <Button variant="outline" asChild>
+              <a href="/api/clients/export" download>
+                <Download /> Exportar CSV
+              </a>
+            </Button>
+            <Button onClick={() => setEditando('novo')}>
+              <Plus />
+              Novo cliente
+            </Button>
+          </>
         }
+      />
+      <ImportarCsvDialog
+        aberto={importar}
+        onAbertoChange={setImportar}
+        titulo="Importar clientes"
+        endpoint="/api/clients/import"
+        colunas="Nome (obrigatória); CNPJ/CPF; Contato; E-mail; Telefone; Observações; Status (Ativo/Inativo). Mesmo nome de um cliente existente atualiza o cadastro; coluna vazia mantém o valor atual."
+        onImportado={() => void qc.invalidateQueries({ queryKey: ['clients'] })}
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -301,12 +301,14 @@ export function ftlRoutes(db: Db) {
             resultado.push({ linha, acao: 'criar', rota });
           }
         } catch (e) {
+          const item = `${get('UF')} ${get('Tipo')}`.trim() || undefined;
           if (e instanceof ErroValidacao || e instanceof HttpError) {
-            resultado.push({ linha, acao: 'erro', erro: e.message });
+            resultado.push({ linha, acao: 'erro', rota: item, erro: e.message });
           } else if (e instanceof z.ZodError) {
             resultado.push({
               linha,
               acao: 'erro',
+              rota: item,
               erro: e.issues[0]?.message ?? 'Dados inválidos.',
             });
           } else {

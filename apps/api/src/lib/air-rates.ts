@@ -6,7 +6,7 @@ import {
   escreverCsv,
   formatNumero,
   hojeIso,
-  lerCsv,
+  lerCsvComLinhas,
   lerData,
   NIVEIS_TARIFA,
   normalizarIata,
@@ -256,11 +256,22 @@ export function lerStatusCsv(v: string | undefined): boolean {
 }
 
 /**
+ * Separador do CSV pela 1ª linha: ";" (padrão do Excel em português e do app antigo) ou ","
+ * (exportações em inglês). Na dúvida, ";".
+ */
+export function detectarSeparador(texto: string): ';' | ',' {
+  const primeira = texto.split(/\r?\n/, 1)[0] ?? '';
+  const conta = (c: string) => primeira.split(c).length - 1;
+  return conta(',') > conta(';') ? ',' : ';';
+}
+
+/**
  * Confere o cabeçalho e devolve as linhas como objetos (chave = coluna normalizada).
  * Colunas a mais são ignoradas; faltando alguma obrigatória, o arquivo é recusado.
  */
 export function linhasCsv(texto: string, obrigatorias: readonly string[]) {
-  const [cab, ...linhas] = lerCsv(texto);
+  const [cabRegistro, ...linhas] = lerCsvComLinhas(texto, detectarSeparador(texto));
+  const cab = cabRegistro?.campos;
   if (!cab) throw requisicaoInvalida('O arquivo está vazio.');
   const chaves = cab.map(chaveCabecalho);
   const faltando = obrigatorias.filter((c) => !chaves.includes(chaveCabecalho(c)));
@@ -270,9 +281,9 @@ export function linhasCsv(texto: string, obrigatorias: readonly string[]) {
     );
   }
   if (linhas.length > 5000) throw requisicaoInvalida('Importe no máximo 5.000 linhas por vez.');
-  return linhas.map((cols, i) => ({
-    linha: i + 2,
-    get: (c: string) => cols[chaves.indexOf(chaveCabecalho(c))]?.trim() ?? '',
+  return linhas.map(({ linha, campos }) => ({
+    linha,
+    get: (c: string) => campos[chaves.indexOf(chaveCabecalho(c))]?.trim() ?? '',
   }));
 }
 

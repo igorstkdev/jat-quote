@@ -8,7 +8,9 @@ import {
   Plus,
   Upload,
   Equal,
+  Download,
 } from 'lucide-react';
+import { escreverCsv } from '@jat/core';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { FormError } from '@/components/field';
@@ -117,8 +119,8 @@ function Conteudo({
       <DialogHeader>
         <DialogTitle>{titulo}</DialogTitle>
         <DialogDescription>
-          Use o mesmo layout do arquivo exportado (separado por ponto e vírgula). Nada é gravado
-          antes da sua confirmação.
+          Use o mesmo layout do arquivo exportado (separado por ponto e vírgula ou vírgula). Nada é
+          gravado antes da sua confirmação.
         </DialogDescription>
       </DialogHeader>
 
@@ -193,7 +195,8 @@ function Conteudo({
               <table className="w-full text-sm">
                 <thead className="bg-destructive/6 sticky top-0 text-left">
                   <tr>
-                    <th className="w-20 px-3 py-2 font-medium">Linha</th>
+                    <th className="w-16 px-3 py-2 font-medium">Linha</th>
+                    <th className="px-3 py-2 font-medium">Item</th>
                     <th className="px-3 py-2 font-medium">Problema</th>
                   </tr>
                 </thead>
@@ -201,6 +204,9 @@ function Conteudo({
                   {erros.map((e) => (
                     <tr key={e.linha} className="border-t">
                       <td className="tabular px-3 py-2">{e.linha}</td>
+                      <td className="max-w-40 truncate px-3 py-2" title={e.rota}>
+                        {e.rota ?? '—'}
+                      </td>
                       <td className="text-destructive px-3 py-2">{e.erro}</td>
                     </tr>
                   ))}
@@ -217,11 +223,18 @@ function Conteudo({
                 : 'Arquivo válido. Confira os números e confirme.'}
             </div>
           )}
-          {erros.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-muted-foreground text-xs">
-              Corrija as linhas no arquivo e escolha-o de novo. Com erro, nada é importado.
+              {erros.length > 0
+                ? 'Corrija as linhas no arquivo e escolha-o de novo. Com erro, nada é importado.'
+                : 'O relatório lista o que acontecerá com cada linha.'}
             </p>
-          )}
+            {r.summary.total > 0 && arquivo && (
+              <Button variant="outline" size="sm" onClick={() => baixarRelatorio(r, arquivo.nome)}>
+                <Download /> Baixar relatório
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -263,4 +276,28 @@ function Resumo({
       <div className="tabular mt-0.5 text-xl font-semibold">{valor}</div>
     </div>
   );
+}
+
+const ROTULO_ACAO = {
+  criar: 'Novo',
+  atualizar: 'Atualiza',
+  igual: 'Sem alteração',
+  erro: 'Erro',
+} as const;
+
+/** Relatório de inconsistências da importação (CSV para abrir no Excel), linha a linha. */
+function baixarRelatorio(r: ResultadoImportacao, nomeArquivo: string) {
+  const ordem = { erro: 0, criar: 1, atualizar: 2, igual: 3 } as const;
+  const linhas = [...r.rows].sort((a, b) => ordem[a.acao] - ordem[b.acao] || a.linha - b.linha);
+  const csv = escreverCsv([
+    ['Linha do arquivo', 'Item', 'Resultado', 'Problema'],
+    ...linhas.map((l) => [l.linha, l.rota ?? '', ROTULO_ACAO[l.acao], l.erro ?? '']),
+  ]);
+  const bom = String.fromCharCode(0xfeff); // o Excel precisa dele para mostrar os acentos
+  const url = URL.createObjectURL(new Blob([bom + csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `relatorio-importacao_${nomeArquivo.replace(/\.csv$/i, '')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
