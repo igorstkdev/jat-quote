@@ -13,16 +13,139 @@ apps/api        API Fastify + Prisma (PostgreSQL). Em produção também entrega
 apps/web        Interface React + Vite + Tailwind + shadcn/ui
 packages/core   Regras de cálculo puras (sem framework), 100% testadas
 e2e             Testes ponta a ponta e screenshots (Playwright)
-scripts         Scripts de apoio (criação do banco, backup)
+scripts         Instalação, serviço, backup e restauração (PowerShell)
 ```
 
-## Pré-requisitos
+## Instalação no servidor (produção)
 
-- Node.js 24 ou superior (LTS) e npm 11
-- PostgreSQL 16 ou superior (desenvolvido com o 18)
-- Git
+Só o servidor recebe instalação; os operadores usam o navegador. Tudo é gratuito.
 
-## Instalação
+**1. Instale os pré-requisitos** (uma vez):
+
+- **Node.js LTS** (24 ou superior): https://nodejs.org. Use o instalador padrão.
+- **PostgreSQL** (16 ou superior): https://www.postgresql.org/download/windows/. Anote a senha do
+  usuário `postgres` que você definir.
+
+**2. Copie a pasta do sistema para o servidor**, por exemplo `C:\JAT\jat-quote`, sem as pastas
+`node_modules` (ou faça `git clone` do repositório).
+
+**3. Rode o instalador** no PowerShell **como Administrador**, dentro da pasta:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts\instalar.ps1
+```
+
+O instalador faz tudo e pode ser rodado de novo com segurança:
+
+1. confere Node.js, npm e PostgreSQL;
+2. cria o `.env` de produção, com uma senha aleatória para o banco;
+3. cria o usuário e o banco no PostgreSQL (pede a senha do `postgres`, que não é gravada);
+4. instala as dependências e compila;
+5. aplica as migrations;
+6. instala o Chromium usado nos PDFs (na pasta `.navegadores` do sistema);
+7. cria o **Admin inicial**: pergunta o login (Enter = `admin`) e mostra a **senha temporária uma
+   única vez**. No primeiro acesso o sistema exige trocá-la;
+8. registra o sistema para **iniciar com o Windows** (tarefa "JAT Quote" do Agendador de Tarefas,
+   como SYSTEM, mesmo sem ninguém logado), agenda o **backup diário às 23h** (tarefa
+   "JAT Quote - Backup") e libera a porta **3333** no Firewall **só para a rede local**;
+9. inicia o sistema e mostra o endereço de acesso.
+
+Opções: `-AdminUsuario maria.souza`, `-Porta 3333`, `-PastaBackup "D:\Backups\JAT"`,
+`-HoraBackup 23:00`, `-PgBin "C:\Program Files\PostgreSQL\18\bin"`.
+
+**4. Acesse** pelo navegador de qualquer máquina da rede: `http://<nome-do-servidor>:3333` (o
+instalador mostra o nome e o IP). Entre com o Admin, troque a senha e cadastre os usuários.
+
+### No dia a dia do servidor
+
+PowerShell como Administrador, na pasta do sistema
+(`powershell -ExecutionPolicy Bypass -File scripts\<script>.ps1 ...`):
+
+| Script e opção                | O que faz                                   |
+| ----------------------------- | ------------------------------------------- |
+| `servico.ps1 -Acao status`    | Mostra se está no ar e o endereço de acesso |
+| `servico.ps1 -Acao reiniciar` | Reinicia o sistema                          |
+| `servico.ps1 -Acao parar`     | Para o sistema (volta sozinho ao religar)   |
+| `servico.ps1 -Acao remover`   | Remove as tarefas e a regra do Firewall     |
+| `atualizar.ps1`               | Aplica uma nova versão (veja abaixo)        |
+
+- Se o sistema cair, ele é reiniciado sozinho em poucos segundos.
+- Logs em `logs\`: `jat-quote.log` (sistema; renovado a cada 10 MB, ficam 5), `servico.log`
+  (inícios e quedas), `backup.log` e `instalacao.log`.
+
+### Atualizar para uma nova versão
+
+1. Copie os arquivos da nova versão por cima da pasta do sistema (mantenha o `.env`, `backups\` e
+   `logs\`). Se a pasta for um repositório git, o script baixa sozinho com `git pull`.
+2. Rode, como Administrador:
+
+   ```bash
+   powershell -ExecutionPolicy Bypass -File scripts\atualizar.ps1
+   ```
+
+   Ele faz backup do banco (sufixo `antes-atualizacao`), para o sistema, instala, compila, aplica
+   as migrations, atualiza o Chromium e inicia de novo, conferindo se respondeu. Se algo falhar,
+   ele tenta subir o sistema de novo e o backup fica disponível para restaurar.
+
+## Backup e restauração
+
+- **Automático**: todo dia às 23h (tarefa "JAT Quote - Backup"), guardando as **30 cópias** mais
+  recentes em `backups\` (ou na pasta de `BACKUP_DIR` no `.env`; a quantidade fica em
+  `BACKUP_KEEP`). Cada cópia é conferida depois de criada.
+- **Guarde uma cópia fora do servidor**: aponte `BACKUP_DIR` para outro disco ou copie a pasta
+  para a rede ou um HD externo com frequência. Backup só no mesmo disco não protege contra defeito
+  no disco. Para gravar direto numa pasta da rede, a tarefa de backup precisa rodar com um usuário
+  que tenha acesso a ela (Agendador de Tarefas → "JAT Quote - Backup" → Propriedades → Alterar
+  usuário).
+- **Backup manual** (antes de algo arriscado):
+
+  ```bash
+  powershell -ExecutionPolicy Bypass -File scripts\backup.ps1
+  ```
+
+- **Restaurar** (lista os backups e pede para digitar RESTAURAR):
+
+  ```bash
+  powershell -ExecutionPolicy Bypass -File scripts\restaurar.ps1
+  ```
+
+  Antes de restaurar, ele faz um backup do estado atual (sufixo `antes-restauracao`), para que dê
+  para voltar atrás. O sistema é parado durante a restauração e iniciado de novo no fim.
+
+## Migração do Base44
+
+As cotações antigas **não** são migradas: o JAT Quote começa em `JQ-000001`. Entram só os
+cadastros, cada um pela própria tela, em **duas etapas**: o sistema mostra uma **prévia** com o
+resultado de cada linha e só grava depois da confirmação. Com qualquer erro, nada é gravado.
+
+1. **Clientes** (Clientes → Importar CSV, só Admin). Colunas: `Nome` (obrigatória), `CNPJ/CPF`,
+   `Contato`, `E-mail`, `Telefone`, `Observações`, `Status` (Ativo/Inativo). Também são aceitos
+   nomes comuns de outras exportações (ex.: `Cliente`, `CNPJ`, `Email`, `Fone`).
+2. **Tarifas aéreas** (Tarifas Aéreas → Importar CSV), no layout do app antigo.
+3. **Tabelas FTL** (FTL Fiat → Tabelas de Preço → Importar CSV).
+
+- Separador `;` ou `,` (detectado sozinho); arquivo em UTF-8 ou no padrão do Excel do Windows.
+- **Relatório de inconsistências**: na prévia, o botão "Baixar relatório" gera um CSV com cada
+  linha do arquivo (o número é o mesmo que aparece no Excel), o resultado (novo, atualiza, sem
+  alteração ou erro) e o problema. Corrija o arquivo e importe de novo.
+- Pode importar o mesmo arquivo mais de uma vez: o que já existe é atualizado, nunca duplicado.
+- Toda importação fica registrada na auditoria.
+
+## Solução de problemas
+
+- **"A API não está respondendo"**: rode `servico.ps1 -Acao status`. Se não estiver no ar,
+  `-Acao reiniciar` e veja `logs\jat-quote.log`.
+- **No servidor abre, mas nas outras máquinas não**: confira a regra "JAT Quote (porta 3333)" no
+  Firewall do Windows e se a rede do servidor está como **Privada** ou de **Domínio** (a regra não
+  vale para rede Pública).
+- **PDF não gera**: rode o instalador de novo (a etapa 6 reinstala o Chromium).
+- **Esqueceu a senha do Admin**: veja "Acesso e segurança".
+- **Backup falhou**: veja `logs\backup.log`; confira o espaço em disco e o acesso à pasta de
+  `BACKUP_DIR`.
+
+## Ambiente de desenvolvimento
+
+Pré-requisitos: Node.js 24+ (npm 11), PostgreSQL 16+ (desenvolvido com o 18) e Git.
 
 1. Instale as dependências:
 
@@ -58,16 +181,15 @@ scripts         Scripts de apoio (criação do banco, backup)
    npm run db:seed
    ```
 
-   O comando mostra **uma única vez** a senha temporária do usuário `admin`. Anote-a: no primeiro
-   acesso o sistema exige trocar a senha. Rodar de novo não altera nada que já exista.
+   O comando mostra **uma única vez** a senha temporária do usuário `admin` (para outro login:
+   `npm run db:seed -- maria.souza`). No primeiro acesso o sistema exige trocar a senha. Rodar de
+   novo não altera nada que já exista.
 
 6. (Uma vez por máquina, para os testes E2E) instale o navegador do Playwright:
 
    ```bash
    npx playwright install chromium
    ```
-
-## Execução
 
 | Comando             | O que faz                                                              |
 | ------------------- | ---------------------------------------------------------------------- |
@@ -85,10 +207,9 @@ scripts         Scripts de apoio (criação do banco, backup)
 > rodar `npm`, use `npm.cmd` no lugar (ex.: `npm.cmd run dev`) ou rode os comandos no Prompt de
 > Comando (cmd).
 
-Em produção, com `HOST=0.0.0.0`, os operadores acessam pela rede em `http://<servidor>:<PORT>`.
-A execução como serviço do Windows é configurada na Fase 6.
+Checklist de testes manuais para os operadores: [CHECKLIST.md](CHECKLIST.md).
 
-## Cotações (Fase 3)
+## Cotações
 
 - **Frete Spot** (`/spot`): resultado em tempo real; o servidor recalcula tudo ao salvar. Atalhos:
   **Ctrl+S** salvar, **Ctrl+Shift+C** copiar o texto, **Ctrl+P** PDF para o cliente.
@@ -105,7 +226,7 @@ A execução como serviço do Windows é configurada na Fase 6.
 - **Cubagem** (`/cubagem`): peso taxado total = maior entre a soma dos pesos brutos e a soma dos cubados.
 - Os formulários guardam um rascunho no navegador, separado por usuário.
 
-## Tarifas e FTL (Fase 4)
+## Tarifas e FTL
 
 - **Tarifas Aéreas** (`/tarifas-aereas`): cadastro por rota (IATA) e companhia, com vigência
   (data final opcional), três níveis opcionais (Urgente, Rápido, Econômico) e histórico de versões.
@@ -125,7 +246,7 @@ A execução como serviço do Windows é configurada na Fase 6.
   tirar uma cotação de Aprovada é só do Admin. Cada mudança fica registrada.
 - Os links de rastreio (Gollog, Azul Cargo) são editados em Administração → Configurações.
 
-## Relatório e Dashboard (Fase 5)
+## Relatório e Dashboard
 
 - **Relatório Spot** (`/relatorios`): filtros combináveis (nº da cotação, cliente, origem ou
   destino; período; status; modal) guardados no endereço da página, então o link pode ser
@@ -150,8 +271,8 @@ A execução como serviço do Windows é configurada na Fase 6.
 - Senhas: mínimo de 8 caracteres, com letras e números. Usuários nunca são excluídos, apenas desativados.
 - Perfis: **Admin** (tudo) e **Operacional** (cotações, tarifas, relatórios, clientes). A permissão
   "Pode editar tarifas" libera o cadastro de tarifas. Todas as permissões são checadas no servidor.
-- **Esqueceu a senha do Admin?** No servidor, rode `npm run admin:recuperar-acesso` (usuário
-  `admin`) ou `npm run admin:recuperar-acesso -- <usuário>` para outro Admin. O comando mostra uma
+- **Esqueceu a senha do Admin?** No servidor, na pasta do sistema, rode
+  `npm.cmd run admin:recuperar-acesso` (usuário `admin`) ou `npm run admin:recuperar-acesso -- <usuário>` para outro Admin. O comando mostra uma
   senha temporária uma única vez, exige a troca no próximo acesso, desbloqueia o usuário, encerra as
   sessões abertas e registra na auditoria. A senha de usuários Operacionais é redefinida pelo Admin.
 - Toda alteração fica na **Auditoria** (Administração → Auditoria), com o antes e o depois.
@@ -162,20 +283,6 @@ A execução como serviço do Windows é configurada na Fase 6.
 - `jat_quote`: banco principal.
 - `jat_quote_test`: usado pelos testes. Nunca aponte `TEST_DATABASE_URL` para o banco principal.
 - Migrations versionadas em `apps/api/prisma/migrations`. Nova migration: `npm run db:migrate`.
-
-## Backup
-
-O script de backup e restauração automático entra na Fase 6. Até lá, backup manual:
-
-```bash
-"C:\Program Files\PostgreSQL\18\bin\pg_dump.exe" -h localhost -U jat -F c -f backups\jat_quote.dump jat_quote
-```
-
-Restauração:
-
-```bash
-"C:\Program Files\PostgreSQL\18\bin\pg_restore.exe" -h localhost -U jat -d jat_quote --clean backups\jat_quote.dump
-```
 
 ## Regras de dinheiro
 
