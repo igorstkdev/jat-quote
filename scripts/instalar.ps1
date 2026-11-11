@@ -26,7 +26,10 @@ param(
   [int]$Porta = 3333,
   [string]$PgBin,
   [string]$PastaBackup,
-  [string]$HoraBackup = '23:00'
+  [string]$HoraBackup = '23:00',
+  # Nomes no PostgreSQL (mude para não misturar com outra instalação na mesma máquina).
+  [string]$Banco = 'jat_quote',
+  [string]$UsuarioBanco = 'jat'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -74,8 +77,8 @@ try {
     Set-DotEnvValue 'HOST' '0.0.0.0'
     Set-DotEnvValue 'PORT' "$Porta"
     Set-DotEnvValue 'DB_PASSWORD' $senha
-    Set-DotEnvValue 'DATABASE_URL' "postgresql://jat:$senha@localhost:5432/jat_quote"
-    Set-DotEnvValue 'TEST_DATABASE_URL' "postgresql://jat:$senha@localhost:5432/jat_quote_test"
+    Set-DotEnvValue 'DATABASE_URL' "postgresql://${UsuarioBanco}:$senha@localhost:5432/$Banco"
+    Set-DotEnvValue 'TEST_DATABASE_URL' ''
     Set-DotEnvValue 'PG_BIN' $bin
     Set-DotEnvValue 'BACKUP_DIR' $(if ($PastaBackup) { $PastaBackup } else { Join-Path $raiz 'backups' })
     Set-DotEnvValue 'BACKUP_KEEP' '30'
@@ -85,7 +88,11 @@ try {
 
   # 3. Banco
   Etapa 3 'Banco de dados (digite a senha do usuário "postgres" quando pedir)'
-  Executar 'Criação do banco' { & "$PSScriptRoot\setup-db.ps1" -PgBin $bin }
+  $db = ConvertFrom-DatabaseUrl $cfg.DATABASE_URL
+  Executar 'Criação do banco' {
+    & "$PSScriptRoot\setup-db.ps1" -PgBin $bin -PgHost $db.Host -PgPort $db.Porta `
+      -Usuario $db.Usuario -Banco $db.Banco -SemBancoDeTeste
+  }
 
   # 4. Dependências e compilação
   Etapa 4 'Instalando dependências e compilando (alguns minutos)'

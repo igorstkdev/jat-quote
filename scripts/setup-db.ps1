@@ -1,24 +1,34 @@
 ﻿<#
-  JAT Quote — cria o usuário "jat" e os bancos jat_quote e jat_quote_test no PostgreSQL.
+  JAT Quote — cria o usuário e os bancos do sistema no PostgreSQL.
 
   Uso (PowerShell, na raiz do projeto):
     powershell -ExecutionPolicy Bypass -File scripts\setup-db.ps1
 
+  Padrão: usuário "jat", bancos "jat_quote" e "jat_quote_test" (desenvolvimento).
+  O instalador do servidor usa -SemBancoDeTeste e pode mudar os nomes com -Usuario e -Banco
+  (por exemplo, para não misturar com um ambiente de desenvolvimento na mesma máquina).
+
   O psql pede a senha do superusuário "postgres" (ela não é gravada em lugar nenhum).
-  A senha do usuário "jat" é lida de DB_PASSWORD no arquivo .env.
-  Pode ser executado mais de uma vez: o que já existe é mantido (a senha do "jat" é atualizada).
+  A senha do usuário do sistema é lida de DB_PASSWORD no arquivo .env.
+  Pode ser executado mais de uma vez: o que já existe é mantido (a senha do usuário é atualizada).
 #>
 param(
   [string]$PgBin = "C:\Program Files\PostgreSQL\18\bin",
   [string]$PgHost = "localhost",
   [int]$PgPort = 5432,
-  [string]$SuperUser = "postgres"
+  [string]$SuperUser = "postgres",
+  [string]$Usuario = "jat",
+  [string]$Banco = "jat_quote",
+  [switch]$SemBancoDeTeste
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $envFile = Join-Path $root ".env"
 if (-not (Test-Path $envFile)) { throw "Arquivo .env não encontrado em $root. Copie o .env.example para .env primeiro." }
+foreach ($nome in @($Usuario, $Banco)) {
+  if ($nome -notmatch '^[a-z_][a-z0-9_]{0,40}$') { throw "Nome inválido: '$nome'. Use letras minúsculas, números e _." }
+}
 
 $line = Get-Content $envFile | Where-Object { $_ -match '^\s*DB_PASSWORD\s*=' } | Select-Object -First 1
 if (-not $line) { throw "DB_PASSWORD não definida no .env." }
@@ -28,22 +38,25 @@ if ($pass -notmatch '^[A-Za-z0-9]+$') { throw "DB_PASSWORD deve conter apenas le
 $psql = Join-Path $PgBin "psql.exe"
 if (-not (Test-Path $psql)) { throw "psql não encontrado em $PgBin. Informe -PgBin." }
 
+$bancos = @($Banco)
+if (-not $SemBancoDeTeste) { $bancos += "${Banco}_test" }
+$criar = ($bancos | ForEach-Object {
+    "SELECT 'CREATE DATABASE $_ OWNER $Usuario ENCODING ''UTF8'' TEMPLATE template0'`n  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$_')\gexec"
+  }) -join "`n"
+
 $sql = @"
 DO `$`$
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'jat') THEN
-    CREATE ROLE jat LOGIN PASSWORD '$pass';
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$Usuario') THEN
+    CREATE ROLE $Usuario LOGIN PASSWORD '$pass';
   ELSE
-    ALTER ROLE jat WITH LOGIN PASSWORD '$pass';
+    ALTER ROLE $Usuario WITH LOGIN PASSWORD '$pass';
   END IF;
 END
 `$`$;
--- Necessário para o "prisma migrate dev" criar o banco-sombra.
-ALTER ROLE jat CREATEDB;
-SELECT 'CREATE DATABASE jat_quote OWNER jat ENCODING ''UTF8'' TEMPLATE template0'
-  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'jat_quote')\gexec
-SELECT 'CREATE DATABASE jat_quote_test OWNER jat ENCODING ''UTF8'' TEMPLATE template0'
-  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'jat_quote_test')\gexec
+-- Necessário para o "prisma migrate dev" criar o banco-sombra (desenvolvimento).
+ALTER ROLE $Usuario CREATEDB;
+$criar
 "@
 
 $tmp = New-TemporaryFile
@@ -52,7 +65,7 @@ try {
   [System.IO.File]::WriteAllText($tmp.FullName, $sql, (New-Object System.Text.UTF8Encoding($false)))
   & $psql -h $PgHost -p $PgPort -U $SuperUser -d postgres -v ON_ERROR_STOP=1 -f $tmp
   if ($LASTEXITCODE -ne 0) { throw "psql terminou com erro ($LASTEXITCODE)." }
-  Write-Host "`nPronto: usuário 'jat' e bancos 'jat_quote' e 'jat_quote_test' configurados." -ForegroundColor Green
+  Write-Host "`nPronto: usuário '$Usuario' e banco(s) $($bancos -join ', ') configurados." -ForegroundColor Green
 } finally {
   Remove-Item $tmp -Force
 }

@@ -51,7 +51,9 @@ O instalador faz tudo e pode ser rodado de novo com segurança:
 9. inicia o sistema e mostra o endereço de acesso.
 
 Opções: `-AdminUsuario maria.souza`, `-Porta 3333`, `-PastaBackup "D:\Backups\JAT"`,
-`-HoraBackup 23:00`, `-PgBin "C:\Program Files\PostgreSQL\18\bin"`.
+`-HoraBackup 23:00`, `-PgBin "C:\Program Files\PostgreSQL\18\bin"`. Para instalar numa máquina
+que também tem o ambiente de desenvolvimento, use outra porta e outros nomes no PostgreSQL, para
+não misturar os dois: `-Porta 3334 -Banco jat_quote_local -UsuarioBanco jat_local`.
 
 **4. Acesse** pelo navegador de qualquer máquina da rede: `http://<nome-do-servidor>:3333` (o
 instalador mostra o nome e o IP). Entre com o Admin, troque a senha e cadastre os usuários.
