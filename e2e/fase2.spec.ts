@@ -48,7 +48,8 @@ test('primeiro acesso exige trocar a senha; Operacional não vê a administraç�
   await page.getByLabel('Nova senha', { exact: true }).fill('NovaSenha2026');
   await page.getByLabel('Confirme a nova senha').fill('NovaSenha2026');
   await page.getByRole('button', { name: 'Definir senha e entrar' }).click();
-  await expect(page.getByRole('heading', { name: /Otávio/ })).toBeVisible();
+  // O hash da senha (argon2) é lento de propósito; com os testes em paralelo, leva alguns segundos.
+  await expect(page.getByRole('heading', { name: /Otávio/ })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole('link', { name: 'Usuários' })).toHaveCount(0);
   // tentar abrir a área administrativa direto pela URL
   await page.goto('/admin/usuarios');

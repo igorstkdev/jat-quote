@@ -5,11 +5,11 @@ import { seed } from './seed.js';
 const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
 try {
-  const { senhaAdmin } = await seed(db);
+  const { senhaAdmin, adminUsername } = await seed(db, { adminUsername: process.argv[2] });
   if (senhaAdmin) {
     console.log('');
     console.log('  Admin inicial criado.');
-    console.log('  Usuário: admin');
+    console.log(`  Usuário: ${adminUsername}`);
     console.log(`  Senha temporária: ${senhaAdmin}`);
     console.log(
       '  Anote agora: ela não será mostrada de novo. A troca é obrigatória no 1º acesso.',

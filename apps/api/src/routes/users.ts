@@ -5,15 +5,8 @@ import type { User } from '../generated/prisma/client.js';
 import { diferencas, registrarAuditoria } from '../lib/audit.js';
 import { conflito, naoEncontrado, requisicaoInvalida } from '../lib/errors.js';
 import { gerarSenhaTemporaria, hashSenha } from '../lib/password.js';
+import { usernameSchema } from '../lib/usuarios.js';
 import { exigir } from '../plugins/auth.js';
-
-const usernameSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .min(3, 'O usuário deve ter pelo menos 3 caracteres.')
-  .max(40, 'O usuário deve ter no máximo 40 caracteres.')
-  .regex(/^[a-z0-9._-]+$/, 'Use só letras sem acento, números, ponto, hífen ou sublinhado.');
 
 const nomeSchema = z.string().trim().min(2, 'Informe o nome.').max(120);
 const roleSchema = z.enum(['ADMIN', 'OPERACIONAL'], { error: 'Perfil inválido.' });

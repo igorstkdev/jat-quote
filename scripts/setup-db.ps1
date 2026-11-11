@@ -1,4 +1,4 @@
-<#
+﻿<#
   JAT Quote — cria o usuário "jat" e os bancos jat_quote e jat_quote_test no PostgreSQL.
 
   Uso (PowerShell, na raiz do projeto):

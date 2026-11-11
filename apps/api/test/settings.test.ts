@@ -197,6 +197,15 @@ describe('seed', () => {
     expect(await db.user.count()).toBe(1);
     expect(await db.usefulLink.count()).toBe(2);
   });
+
+  it('Admin com o login escolhido na instalação (validado)', async () => {
+    await limparBanco(db);
+    const r = await seed(db, { adminUsername: ' Maria.Souza ' });
+    expect(r.adminUsername).toBe('maria.souza');
+    expect(await db.user.findUnique({ where: { username: 'maria.souza' } })).not.toBeNull();
+    await limparBanco(db);
+    await expect(seed(db, { adminUsername: 'josé' })).rejects.toThrow(/sem acento/);
+  });
 });
 
 describe('auditoria', () => {
