@@ -139,7 +139,10 @@ resultado de cada linha e só grava depois da confirmação. Com qualquer erro, 
   `-Acao reiniciar` e veja `logs\jat-quote.log`.
 - **No servidor abre, mas nas outras máquinas não**: confira a regra "JAT Quote (porta 3333)" no
   Firewall do Windows e se a rede do servidor está como **Privada** ou de **Domínio** (a regra não
-  vale para rede Pública).
+  vale para rede Pública; o instalador e o `servico.ps1 -Acao status` avisam). Para mudar:
+  Configurações → Rede e Internet → (sua rede) → Perfil de rede: **Privada**. Se não puder mudar,
+  `servico.ps1 -Acao instalar -PermitirRedePublica` libera também na rede pública, ainda só para
+  máquinas da mesma sub-rede.
 - **PDF não gera**: rode o instalador de novo (a etapa 6 reinstala o Chromium).
 - **Esqueceu a senha do Admin**: veja "Acesso e segurança".
 - **Backup falhou**: veja `logs\backup.log`; confira o espaço em disco e o acesso à pasta de

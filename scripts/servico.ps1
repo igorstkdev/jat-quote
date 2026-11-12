@@ -18,7 +18,9 @@
 param(
   [Parameter(Mandatory)][ValidateSet('instalar', 'remover', 'iniciar', 'parar', 'reiniciar', 'status')]
   [string]$Acao,
-  [string]$HoraBackup = '23:00'
+  [string]$HoraBackup = '23:00',
+  # Libera a porta também quando a rede do Windows está como "Pública" (menos seguro).
+  [switch]$PermitirRedePublica
 )
 
 $ErrorActionPreference = 'Stop'
@@ -69,6 +71,24 @@ function Mostrar-Enderecos {
   Write-Host "`nOs operadores acessam pelo navegador:" -ForegroundColor Cyan
   Write-Host "  http://$($env:COMPUTERNAME.ToLower()):$porta" -ForegroundColor Cyan
   foreach ($ip in $ips) { Write-Host "  http://${ip}:$porta" -ForegroundColor Cyan }
+  Avisar-RedePublica
+}
+
+<#
+  Com a rede do Windows como "Pública", a regra do Firewall (Domínio/Privada) não vale e as
+  outras máquinas não conseguem acessar. Avisa e explica como resolver.
+#>
+function Avisar-RedePublica {
+  $publicas = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue | Where-Object { $_.NetworkCategory -eq 'Public' })
+  if ($publicas.Count -eq 0) { return }
+  $regra = Get-NetFirewallRule -DisplayName $regraFirewall -ErrorAction SilentlyContinue
+  if ($regra -and ($regra.Profile.ToString() -match 'Public|Any')) { return }
+  Write-Host "`nATENÇÃO: a rede '$($publicas[0].Name)' está como Pública no Windows." -ForegroundColor Yellow
+  Write-Host '  Nesse modo o Firewall bloqueia o acesso das outras máquinas (no próprio servidor funciona).' -ForegroundColor Yellow
+  Write-Host '  Resolva de um destes jeitos:' -ForegroundColor Yellow
+  Write-Host '   - Recomendado: Configurações > Rede e Internet > (sua rede) > Perfil de rede: Privada.' -ForegroundColor Yellow
+  Write-Host '   - Ou libere também na rede pública:' -ForegroundColor Yellow
+  Write-Host '     powershell -ExecutionPolicy Bypass -File scripts\servico.ps1 -Acao instalar -PermitirRedePublica' -ForegroundColor Yellow
 }
 
 switch ($Acao) {
@@ -101,9 +121,12 @@ switch ($Acao) {
 
     # Firewall: porta liberada só para a rede local
     Get-NetFirewallRule -DisplayName 'JAT Quote (porta *' -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+    # Mesmo com a rede pública liberada, só aceita máquinas da mesma sub-rede (LocalSubnet).
+    $perfis = if ($PermitirRedePublica) { @('Domain', 'Private', 'Public') } else { @('Domain', 'Private') }
     New-NetFirewallRule -DisplayName $regraFirewall -Direction Inbound -Protocol TCP -LocalPort $porta `
-      -Action Allow -Profile Domain, Private -RemoteAddress LocalSubnet | Out-Null
-    Write-Log "Firewall: porta $porta liberada para a rede local." -Arquivo servico -Nivel Ok
+      -Action Allow -Profile $perfis -RemoteAddress LocalSubnet | Out-Null
+    Write-Log "Firewall: porta $porta liberada para a rede local ($($perfis -join ', '))." -Arquivo servico -Nivel Ok
+    Avisar-RedePublica
   }
 
   'remover' {
@@ -144,8 +167,10 @@ switch ($Acao) {
   'status' {
     $t = Get-ScheduledTask -TaskName $tarefa -ErrorAction SilentlyContinue
     $b = Get-ScheduledTask -TaskName $tarefaBackup -ErrorAction SilentlyContinue
-    Write-Host ("Tarefa do sistema : {0}" -f $(if ($t) { $t.State } else { 'não instalada' }))
-    Write-Host ("Tarefa de backup  : {0}" -f $(if ($b) { "$($b.State), próximo: $((Get-ScheduledTaskInfo -TaskName $tarefaBackup).NextRunTime)" } else { 'não instalada' }))
+    # Sem Administrador o Windows não mostra tarefas que rodam como SYSTEM.
+    $ausente = if (Test-Administrador) { 'não instalada' } else { 'só aparece rodando como Administrador' }
+    Write-Host ("Tarefa do sistema : {0}" -f $(if ($t) { $t.State } else { $ausente }))
+    Write-Host ("Tarefa de backup  : {0}" -f $(if ($b) { "$($b.State), próximo: $((Get-ScheduledTaskInfo -TaskName $tarefaBackup).NextRunTime)" } else { $ausente }))
     if (Test-Saude) {
       Write-Host "Sistema           : no ar (http://127.0.0.1:$porta)" -ForegroundColor Green
       Mostrar-Enderecos
