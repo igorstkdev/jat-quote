@@ -78,12 +78,13 @@ switch ($Acao) {
     $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
 
     # Sistema: inicia com o Windows, sem limite de tempo, reinicia se a tarefa falhar.
-    $acao = New-ScheduledTaskAction -Execute $ps -WorkingDirectory $raiz `
+    # (Não use $acao: no PowerShell é a mesma variável do parâmetro -Acao.)
+    $acaoSistema = New-ScheduledTaskAction -Execute $ps -WorkingDirectory $raiz `
       -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$raiz\scripts\executar.ps1`""
     $config = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
       -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew `
       -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
-    Register-ScheduledTask -TaskName $tarefa -Action $acao -Principal $principal -Settings $config `
+    Register-ScheduledTask -TaskName $tarefa -Action $acaoSistema -Principal $principal -Settings $config `
       -Trigger (New-ScheduledTaskTrigger -AtStartup) -Force `
       -Description 'JAT Quote - Cotação de Fretes. Inicia com o Windows (scripts\executar.ps1).' | Out-Null
     Write-Log "Tarefa '$tarefa' criada (inicia com o Windows)." -Arquivo servico -Nivel Ok
