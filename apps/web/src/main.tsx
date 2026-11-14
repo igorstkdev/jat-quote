@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { Toaster } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { LicencaGate } from '@/components/licenca';
 import { ApiError } from './lib/api';
 import { SessaoWatcher } from './lib/auth';
 import { ThemeProvider, useTheme } from './lib/theme';
@@ -35,9 +36,11 @@ createRoot(root).render(
       <QueryClientProvider client={queryClient}>
         <TooltipProvider delayDuration={300}>
           <SessaoWatcher />
-          <Suspense>
-            <RouterProvider router={router} />
-          </Suspense>
+          <LicencaGate>
+            <Suspense>
+              <RouterProvider router={router} />
+            </Suspense>
+          </LicencaGate>
           <Toasts />
         </TooltipProvider>
       </QueryClientProvider>

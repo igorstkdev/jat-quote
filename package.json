@@ -1,6 +1,6 @@
 {
   "name": "jat-quote",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "JAT Quote — Cotação de Fretes (JAT Transportes e Logística)",
   "type": "module",

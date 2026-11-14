@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { FormError } from '@/components/field';
 import { Logo } from '@/components/logo';
+import { Rodape } from '@/components/rodape';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -87,70 +88,73 @@ export default function LoginPage() {
       </div>
 
       {/* Formulário */}
-      <div className="relative flex items-center justify-center px-6 py-12">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="w-full max-w-sm"
-        >
-          <div className="mb-8 lg:hidden">
-            <Logo />
+      <div className="relative flex flex-col">
+        <div className="flex flex-1 items-center justify-center px-6 py-12">
+          <div className="absolute top-4 right-4">
+            <ThemeToggle />
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight">Entrar</h2>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Use o usuário e a senha fornecidos pelo administrador.
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="w-full max-w-sm"
+          >
+            <div className="mb-8 lg:hidden">
+              <Logo />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">Entrar</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Use o usuário e a senha fornecidos pelo administrador.
+            </p>
 
-          <form onSubmit={enviar} className="mt-8 grid gap-4" noValidate>
-            <FormError mensagem={login.error?.message} />
-            <div className="grid gap-1.5">
-              <Label htmlFor="username">Usuário</Label>
-              <Input
-                id="username"
-                autoComplete="username"
-                autoFocus
-                autoCapitalize="none"
-                spellCheck={false}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="h-10"
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
+            <form onSubmit={enviar} className="mt-8 grid gap-4" noValidate>
+              <FormError mensagem={login.error?.message} />
+              <div className="grid gap-1.5">
+                <Label htmlFor="username">Usuário</Label>
                 <Input
-                  id="password"
-                  type={verSenha ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-10 pr-10"
+                  id="username"
+                  autoComplete="username"
+                  autoFocus
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="h-10"
                 />
-                <button
-                  type="button"
-                  onClick={() => setVerSenha((v) => !v)}
-                  className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex w-10 items-center justify-center"
-                  aria-label={verSenha ? 'Ocultar senha' : 'Mostrar senha'}
-                >
-                  {verSenha ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
               </div>
-            </div>
-            <Button type="submit" size="lg" className="mt-2 h-10" disabled={login.isPending}>
-              {login.isPending ? <Loader2 className="animate-spin" /> : null}
-              Entrar
-              {!login.isPending && <ArrowRight />}
-            </Button>
-          </form>
-          <p className="text-muted-foreground mt-8 text-xs">
-            Esqueceu a senha? Peça ao administrador para redefini-la.
-          </p>
-        </motion.div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={verSenha ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setVerSenha((v) => !v)}
+                    className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex w-10 items-center justify-center"
+                    aria-label={verSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                  >
+                    {verSenha ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" size="lg" className="mt-2 h-10" disabled={login.isPending}>
+                {login.isPending ? <Loader2 className="animate-spin" /> : null}
+                Entrar
+                {!login.isPending && <ArrowRight />}
+              </Button>
+            </form>
+            <p className="text-muted-foreground mt-8 text-xs">
+              Esqueceu a senha? Peça ao administrador para redefini-la.
+            </p>
+          </motion.div>
+        </div>
+        <Rodape />
       </div>
     </div>
   );

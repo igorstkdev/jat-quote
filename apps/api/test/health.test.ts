@@ -12,7 +12,7 @@ const db = createDb(process.env.TEST_DATABASE_URL ?? '');
 let app: Awaited<ReturnType<typeof buildApp>>;
 
 beforeAll(async () => {
-  app = await buildApp({ db, webDist: '__inexistente__' });
+  app = await buildApp({ db, webDist: '__inexistente__', licenca: false });
 });
 
 afterAll(async () => {
@@ -33,7 +33,7 @@ describe('GET /api/health', () => {
 
   it('devolve 503 com mensagem em português quando o banco está fora', async () => {
     const broken = createDb('postgresql://ninguem:x@127.0.0.1:1/nada');
-    const app2 = await buildApp({ db: broken, webDist: '__inexistente__' });
+    const app2 = await buildApp({ db: broken, webDist: '__inexistente__', licenca: false });
     const res = await app2.inject({ method: 'GET', url: '/api/health' });
     expect(res.statusCode).toBe(503);
     expect(res.json().message).toBe('Não foi possível conectar ao banco de dados.');

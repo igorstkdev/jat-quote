@@ -10,6 +10,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useSearchParams } from 'react-router';
+import { PlanoVigencia } from '@/components/plano-vigencia';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Field, FormError } from '@/components/field';
@@ -37,18 +39,24 @@ const CHAVE_CONFIG = ['settings'] as const;
 const CHAVE_LINKS_ADMIN = ['links', 'admin'] as const;
 
 export default function ConfiguracoesPage() {
+  const [params, setParams] = useSearchParams();
+  const aba = params.get('aba') ?? 'links';
   return (
     <Page className="max-w-5xl">
       <PageHeader
         titulo="Configurações"
         descricao="Valores padrão do sistema. Toda alteração fica registrada na auditoria."
       />
-      <Tabs defaultValue="links">
+      <Tabs
+        value={aba}
+        onValueChange={(v) => setParams(v === 'links' ? {} : { aba: v }, { replace: true })}
+      >
         <TabsList>
           <TabsTrigger value="links">Links úteis</TabsTrigger>
           <TabsTrigger value="advalorem">Ad valorem</TabsTrigger>
           <TabsTrigger value="ftl">Condições FTL</TabsTrigger>
           <TabsTrigger value="rastreio">Links de rastreio</TabsTrigger>
+          <TabsTrigger value="licenca">Plano de vigência</TabsTrigger>
         </TabsList>
         <TabsContent value="links" className="mt-4">
           <LinksUteis />
@@ -61,6 +69,9 @@ export default function ConfiguracoesPage() {
         </TabsContent>
         <TabsContent value="rastreio" className="mt-4">
           <LinksRastreio />
+        </TabsContent>
+        <TabsContent value="licenca" className="mt-4">
+          <PlanoVigencia />
         </TabsContent>
       </Tabs>
     </Page>

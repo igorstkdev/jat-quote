@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { FastifyPluginAsync } from 'fastify';
 import type { Db } from '../db.js';
 
@@ -5,6 +6,13 @@ interface DbInfo {
   version: string;
   now: Date;
 }
+
+/** Versão do sistema (apps/api/package.json), também quando roda como serviço. */
+const VERSAO = (
+  JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as {
+    version: string;
+  }
+).version;
 
 export const healthRoutes =
   (db: Db): FastifyPluginAsync =>
@@ -15,7 +23,7 @@ export const healthRoutes =
         const settings = await db.setting.count();
         return {
           status: 'ok',
-          api: { name: 'JAT Quote API', version: process.env.npm_package_version ?? '0.1.0' },
+          api: { name: 'JAT Quote API', version: VERSAO },
           database: {
             connected: true,
             version: info?.version.split(' on ')[0] ?? 'desconhecida',

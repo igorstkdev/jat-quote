@@ -28,7 +28,7 @@ function TelaCarregando() {
   return (
     <div className="flex min-h-svh items-center justify-center">
       <div className="animate-pulse">
-        <Logo />
+        <Logo link={false} />
       </div>
     </div>
   );
@@ -37,7 +37,7 @@ function TelaCarregando() {
 function ErroCarregar({ mensagem, onTentar }: { mensagem: string; onTentar: () => void }) {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-4 px-6 text-center">
-      <Logo />
+      <Logo link={false} />
       <p role="alert" className="text-destructive max-w-sm text-sm">
         {mensagem}
       </p>

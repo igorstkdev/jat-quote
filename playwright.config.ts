@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { CHAVE_PUBLICA_TESTE } from './apps/api/test/licenca-teste';
 
 /**
  * E2E do JAT Quote. Sobe o build de produção (API servindo o site) na porta 3399,
@@ -35,6 +36,7 @@ export default defineConfig({
       PORT: String(PORT),
       LOG_LEVEL: 'warn',
       LOGIN_RATE_LIMIT: '1000',
+      LICENCA_CHAVE_TESTE: CHAVE_PUBLICA_TESTE,
       DATABASE_URL: process.env.TEST_DATABASE_URL ?? '',
     },
   },

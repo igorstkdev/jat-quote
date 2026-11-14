@@ -195,7 +195,7 @@ describe('limite de tentativas por IP', () => {
   it('mais de N logins por minuto do mesmo IP → 429 em português', async () => {
     const app2 = await (
       await import('../src/app.js')
-    ).buildApp({ db, webDist: '__x__', loginRateLimit: 2 });
+    ).buildApp({ db, webDist: '__x__', loginRateLimit: 2, licenca: false });
     const tentar = () =>
       app2.inject({
         method: 'POST',

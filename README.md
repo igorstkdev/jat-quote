@@ -31,6 +31,9 @@ Só o servidor recebe instalação; os operadores usam o navegador. Tudo é grat
    com o Windows, o backup diário e a regra do Firewall.
 4. A tela final mostra o **endereço de acesso** e a **senha temporária do Admin** (uma única vez;
    anote). Cria também o atalho "JAT Quote" no menu Iniciar.
+5. No **primeiro acesso** o sistema pede a **ativação**: usuário e senha do Admin, a **senha mestre
+   de ativação** (fornecida pelo responsável pelo sistema) e o plano (Mensal, Trimestral, Semestral
+   ou Anual). Ao atualizar uma versão anterior à 1.0.0, a ativação também é pedida.
 
 - **Atualizar**: rode o setup de uma versão nova no mesmo servidor. Ele reaproveita as respostas,
   faz backup do banco, para o sistema, atualiza os arquivos, aplica as migrations e inicia de novo.
@@ -308,6 +311,12 @@ Checklist de testes manuais para os operadores: [CHECKLIST.md](CHECKLIST.md).
   `npm.cmd run admin:recuperar-acesso` (usuário `admin`) ou `npm run admin:recuperar-acesso -- <usuário>` para outro Admin. O comando mostra uma
   senha temporária uma única vez, exige a troca no próximo acesso, desbloqueia o usuário, encerra as
   sessões abertas e registra na auditoria. A senha de usuários Operacionais é redefinida pelo Admin.
+- **Plano de vigência**: o sistema fica bloqueado para todos quando o plano vence. Os Admins são
+  avisados 15 dias antes e renovam em **Configurações → Plano de vigência** com a senha mestre (o
+  novo prazo soma ao que falta). Com o sistema vencido, a própria tela de bloqueio faz a renovação.
+  Se a data do Windows for atrasada de propósito, o sistema também bloqueia até reativar.
+  Para trocar a senha mestre (desenvolvimento): `npm run licenca:chave -w @jat/api`, copie a chave
+  para `CHAVE_PUBLICA_LICENCA` em `apps/api/src/lib/licenca.ts` e gere um novo setup.
 - Toda alteração fica na **Auditoria** (Administração → Auditoria), com o antes e o depois.
 - Atalhos: **Ctrl+K** abre a busca de telas e ações; **Ctrl+B** recolhe o menu.
 

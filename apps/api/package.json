@@ -1,6 +1,6 @@
 {
   "name": "@jat/api",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,13 +15,14 @@
     "db:seed": "node --conditions=@jat/source --import tsx src/seed-cli.ts",
     "db:seed:prod": "node dist/seed-cli.js",
     "admin:recuperar-acesso": "node --conditions=@jat/source --import tsx src/recuperar-acesso-cli.ts",
-    "admin:recuperar-acesso:prod": "node dist/recuperar-acesso-cli.js"
+    "admin:recuperar-acesso:prod": "node dist/recuperar-acesso-cli.js",
+    "licenca:chave": "node --conditions=@jat/source --import tsx src/licenca-chave-cli.ts"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",
     "@fastify/rate-limit": "11.2.2",
     "@fastify/static": "10.1.10",
-    "@jat/core": "0.1.0",
+    "@jat/core": "1.0.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "argon2": "0.45.2",

@@ -1,4 +1,4 @@
-# JAT Quote — Contexto do Projeto (v1.0 beta)
+# JAT Quote — Contexto do Projeto (v1.0.0)
 
 > Este arquivo é lido automaticamente pelo Claude Code em toda sessão. Ele é a fonte única de verdade do projeto.
 > Atualize-o sempre que uma regra de negócio for confirmada ou alterada.
@@ -158,6 +158,18 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
   - **Backup diário às 23h**, guardando as **30 cópias** mais recentes (`pg_dump`).
   - **Migração do Base44 sem cotações antigas**: entram só os cadastros (clientes, tarifas aéreas, tabelas FTL). As cotações começam do zero, em `JQ-000001`.
 - Decisão de 14/11/2026: **instalador gráfico** (`JAT-Quote-Setup-<versão>.exe`, Inno Setup, gratuito) que **instala tudo** (PostgreSQL, Node.js e Chromium embutidos, sem internet) e pergunta pasta, porta, login do Admin, pasta/horário/cópias do backup e liberação em rede pública. O script `instalar.ps1` continua como alternativa.
+### 3.12 Plano de vigência (licença), rodapé e logo (decisões de 14/11/2026)
+
+- O sistema só funciona com um **plano de vigência ativo**: **Mensal, Trimestral (3 meses), Semestral (6 meses) ou Anual**. Sem plano (primeiro acesso), com plano vencido ou com licença alterada, **todos** veem só a tela de ativação; os dados continuam guardados e o backup segue rodando.
+- Quem ativa/renova: um **Admin** (usuário + senha, ou já logado em Configurações → Plano de vigência) **e** a **senha mestre de ativação**, fornecida pelo responsável pelo sistema. A senha mestre **nunca é gravada** (nem no código, nem no git, nem no banco): o código guarda só a chave pública Ed25519 derivada dela (scrypt) e cada licença é **assinada**. Trocar a senha mestre = `npm run licenca:chave -w @jat/api`, atualizar `CHAVE_PUBLICA_LICENCA` e gerar novo setup.
+- Prazo em **meses de calendário**, válido até o **fim do dia** do vencimento (Brasília). Renovar antes de vencer **soma ao que falta**; plano vencido conta a partir de hoje.
+- **Aviso 15 dias antes, só para Admins** (faixa no topo com o botão Renovar).
+- 5 senhas mestre erradas seguidas bloqueiam a ativação por 15 min. Ativações e falhas vão para a auditoria.
+- Proteções: licença presa à instalação; alteração no banco invalida a assinatura; **relógio do servidor atrasado** (mais de 6 h antes do último uso) bloqueia até reativar.
+- **Rodapé** em todas as telas: "JAT Quote © 2027 - Sistema de Cotações Logísticas | Desenvolvido por Igor Cruz".
+- **Clicar na logo da JAT** abre https://www.grupojat.com.br/ em nova aba.
+- Versão **1.0.0** (primeira com ativação).
+
 - ⚠️ Pendente: nome do usuário Admin do servidor (o instalador pergunta) e os CSVs reais exportados do Base44.
 
 ## 4. Padrões de qualidade

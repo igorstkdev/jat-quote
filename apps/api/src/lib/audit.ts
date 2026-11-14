@@ -18,7 +18,8 @@ export type AcaoAuditoria =
   | 'IMPORTAR'
   | 'EXPORTAR'
   | 'ARQUIVAR'
-  | 'ATIVAR';
+  | 'ATIVAR'
+  | 'ATIVACAO_FALHOU';
 
 export type EntidadeAuditoria =
   | 'sessao'
@@ -28,7 +29,8 @@ export type EntidadeAuditoria =
   | 'tarifa_aerea'
   | 'tabela_ftl'
   | 'configuracao'
-  | 'link';
+  | 'link'
+  | 'licenca';
 
 export interface EventoAuditoria {
   action: AcaoAuditoria;

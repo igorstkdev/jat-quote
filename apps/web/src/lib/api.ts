@@ -17,6 +17,12 @@ export function definirAoPerderSessao(fn: (() => void) | null) {
   aoPerderSessao = fn;
 }
 
+/** Chamado quando a API responde 423 por licença bloqueada. Definido pelo LicencaGate. */
+let aoBloquearLicenca: (() => void) | null = null;
+export function definirAoBloquearLicenca(fn: (() => void) | null) {
+  aoBloquearLicenca = fn;
+}
+
 async function request<T>(metodo: Metodo, path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
@@ -33,9 +39,14 @@ async function request<T>(metodo: Metodo, path: string, body?: unknown): Promise
   } catch {
     throw new ApiError('Não foi possível falar com o servidor. Verifique a rede.', 0);
   }
-  const data = (await res.json().catch(() => null)) as { message?: string; campo?: string } | null;
+  const data = (await res.json().catch(() => null)) as {
+    message?: string;
+    campo?: string;
+    codigo?: string;
+  } | null;
   if (!res.ok) {
     if (res.status === 401 && !path.startsWith('/api/auth/')) aoPerderSessao?.();
+    if (res.status === 423 && data?.codigo === 'LICENCA_BLOQUEADA') aoBloquearLicenca?.();
     if (!data?.message && [502, 503, 504].includes(res.status)) {
       throw new ApiError(
         'A API não está respondendo. Verifique se o servidor está ligado.',

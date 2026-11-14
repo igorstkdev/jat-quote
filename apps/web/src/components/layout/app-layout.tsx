@@ -1,10 +1,13 @@
 import { Menu, Search } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
+import { AvisoLicenca } from '@/components/licenca';
+import { Rodape } from '@/components/rodape';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ehAdmin, useMe } from '@/lib/auth';
 import { useLocalStorage } from '@/lib/use-local-storage';
 import { CommandPalette } from './command-palette';
 import { TODOS_ITENS } from './nav';
@@ -87,16 +90,26 @@ export function AppLayout() {
           <UserMenu />
         </header>
 
-        <main className="flex-1 overflow-y-auto">
-          <Suspense fallback={<CarregandoPagina />}>
-            <Outlet />
-          </Suspense>
+        <AvisoLicencaAdmin />
+        <main className="flex flex-1 flex-col overflow-y-auto">
+          <div className="flex-1">
+            <Suspense fallback={<CarregandoPagina />}>
+              <Outlet />
+            </Suspense>
+          </div>
+          <Rodape className="border-t" />
         </main>
       </div>
 
       <CommandPalette aberto={paleta} onAbertoChange={setPaleta} onAlternarMenu={alternarMenu} />
     </div>
   );
+}
+
+/** A faixa de vencimento só aparece para Admins (decisão de 14/11/2026). */
+function AvisoLicencaAdmin() {
+  const { data } = useMe();
+  return ehAdmin(data) ? <AvisoLicenca /> : null;
 }
 
 export function CarregandoPagina() {

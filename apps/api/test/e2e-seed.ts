@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { hashSenha } from '../src/lib/password.js';
 import { seed } from '../src/seed.js';
 import { criarDbTeste, limparBanco } from './helpers.js';
+import { criarControleLicenca } from '../src/lib/licenca.js';
+import { CHAVE_PUBLICA_TESTE, SENHA_MESTRE_TESTE } from './licenca-teste.js';
 
 export const SENHA_E2E = 'E2eSenha123';
 
@@ -245,6 +247,9 @@ try {
       data: { quoteId: q.id, toStatus: 'PENDENTE', userId: admin.id, at: criada },
     });
   }
+
+  // Licença de teste (o servidor do E2E usa a chave pública de teste).
+  await criarControleLicenca(db, CHAVE_PUBLICA_TESTE).ativar(SENHA_MESTRE_TESTE, 'ANUAL', 'admin');
 } finally {
   await db.$disconnect();
 }

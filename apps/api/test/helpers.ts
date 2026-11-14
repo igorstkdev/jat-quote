@@ -20,7 +20,7 @@ export function criarDbTeste(): Db {
 }
 
 export async function criarAppTeste(db: Db) {
-  return buildApp({ db, webDist: '__inexistente__', loginRateLimit: 10_000 });
+  return buildApp({ db, webDist: '__inexistente__', loginRateLimit: 10_000, licenca: false });
 }
 
 export type App = Awaited<ReturnType<typeof criarAppTeste>>;

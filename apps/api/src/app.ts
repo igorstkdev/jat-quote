@@ -20,6 +20,8 @@ import { airRateRoutes } from './routes/air-rates.js';
 import { ftlRoutes } from './routes/ftl.js';
 import { reportRoutes } from './routes/reports.js';
 import { fecharNavegadorPdf } from './lib/pdf.js';
+import { CHAVE_PUBLICA_LICENCA, criarControleLicenca } from './lib/licenca.js';
+import { licencaRoutes, rotaLiberadaSemLicenca } from './routes/licenca.js';
 
 // Mensagens padrão do Zod em português.
 z.config(z.locales.pt());
@@ -37,6 +39,11 @@ export interface AppOptions {
   trustProxy?: boolean;
   /** Tentativas de login por minuto por IP (padrão 20). */
   loginRateLimit?: number;
+  /**
+   * Licença (plano de vigência). Padrão: chave pública oficial. `false` desliga o bloqueio
+   * (só nos testes de integração das outras telas).
+   */
+  licenca?: { chavePublica: string; agora?: () => Date } | false;
 }
 
 const defaultWebDist = fileURLToPath(new URL('../../web/dist', import.meta.url));
@@ -49,6 +56,7 @@ export async function buildApp({
   cookieSecure = false,
   trustProxy = false,
   loginRateLimit = 20,
+  licenca = { chavePublica: CHAVE_PUBLICA_LICENCA },
 }: AppOptions) {
   const app = Fastify({ logger, trustProxy });
 
@@ -88,7 +96,28 @@ export async function buildApp({
 
   const sessoes = registrarAuth(app, { db, sessionTtlHours, cookieSecure });
 
+  const controleLicenca = criarControleLicenca(
+    db,
+    licenca ? licenca.chavePublica : CHAVE_PUBLICA_LICENCA,
+    licenca ? licenca.agora : undefined,
+  );
+  if (licenca) {
+    // Sistema sem licença válida: só a tela de ativação funciona.
+    app.addHook('onRequest', async (req, reply) => {
+      if (rotaLiberadaSemLicenca(req.url)) return;
+      const estado = await controleLicenca.estado();
+      if (estado.bloqueado) {
+        return reply.code(423).send({
+          status: 'erro',
+          codigo: 'LICENCA_BLOQUEADA',
+          message: `Sistema bloqueado. ${estado.mensagem}`,
+        });
+      }
+    });
+  }
+
   await app.register(healthRoutes(db));
+  await app.register(licencaRoutes(db, controleLicenca));
   await app.register(authRoutes(db, sessoes, loginRateLimit));
   await app.register(userRoutes(db));
   await app.register(clientRoutes(db));

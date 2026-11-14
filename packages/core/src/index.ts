@@ -82,3 +82,14 @@ export {
 } from './datas.js';
 export type { DataIso, Vigencia } from './datas.js';
 export { taxaConversao, mesDe, mesesEntre, rotuloMes } from './indicadores.js';
+export {
+  PLANOS_LICENCA,
+  MESES_PLANO,
+  ROTULO_PLANO,
+  AVISO_VENCIMENTO_DIAS,
+  somarMeses,
+  diasEntre,
+  calcularVencimento,
+  situacaoVigencia,
+} from './licenca.js';
+export type { PlanoLicenca, SituacaoLicenca, EstadoVigencia } from './licenca.js';

@@ -1,6 +1,7 @@
 import { buildApp } from './app.js';
 import { createDb } from './db.js';
 import { loadEnv } from './env.js';
+import { CHAVE_PUBLICA_LICENCA } from './lib/licenca.js';
 
 const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
@@ -11,6 +12,12 @@ const app = await buildApp({
   cookieSecure: env.COOKIE_SECURE,
   trustProxy: env.TRUST_PROXY,
   loginRateLimit: env.LOGIN_RATE_LIMIT,
+  licenca: {
+    chavePublica:
+      env.NODE_ENV === 'test' && env.LICENCA_CHAVE_TESTE
+        ? env.LICENCA_CHAVE_TESTE
+        : CHAVE_PUBLICA_LICENCA,
+  },
 });
 
 async function shutdown(signal: string) {

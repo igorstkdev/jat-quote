@@ -28,6 +28,7 @@ const ENTIDADES: Record<string, string> = {
   tabela_ftl: 'Tabela FTL',
   configuracao: 'Configuração',
   link: 'Link útil',
+  licenca: 'Plano de vigência',
 };
 
 const ACOES: Record<
@@ -50,6 +51,7 @@ const ACOES: Record<
   IMPORTAR: { rotulo: 'Importou', variante: 'default' },
   EXPORTAR: { rotulo: 'Exportou', variante: 'outline' },
   ARQUIVAR: { rotulo: 'Arquivou', variante: 'destructive' },
+  ATIVACAO_FALHOU: { rotulo: 'Ativação falhou', variante: 'destructive' },
 };
 
 const ROTULO_CAMPO: Record<string, string> = {

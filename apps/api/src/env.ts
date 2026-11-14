@@ -22,6 +22,8 @@ const schema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
   LOGIN_RATE_LIMIT: z.coerce.number().int().min(1).default(20),
+  /** Só com NODE_ENV=test (E2E): chave pública de teste da licença. Ignorada em produção. */
+  LICENCA_CHAVE_TESTE: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 
