@@ -13,3 +13,6 @@ e2e/screenshots/
 backups/
 .navegadores/
 logs/
+instalador/cache/
+instalador/pacote/
+instalador/saida/

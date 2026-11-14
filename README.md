@@ -16,9 +16,37 @@ e2e             Testes ponta a ponta e screenshots (Playwright)
 scripts         Instalação, serviço, backup e restauração (PowerShell)
 ```
 
-## Instalação no servidor (produção)
+## Instalação no servidor com o assistente (recomendado)
 
 Só o servidor recebe instalação; os operadores usam o navegador. Tudo é gratuito.
+
+1. Copie o **`JAT-Quote-Setup-<versão>.exe`** para o servidor e dê dois cliques (o Windows pede
+   permissão de Administrador).
+2. O assistente pergunta: **pasta de instalação** (padrão `C:\JAT Quote`), **porta de acesso**
+   (padrão 3333, conferida se está livre), **login do Admin**, **pasta, horário e quantidade de
+   cópias do backup** e se deve liberar o acesso mesmo com a rede do Windows como "Pública".
+3. Ele instala e configura tudo, sem internet e sem instalar nada antes: o **PostgreSQL** (serviço
+   "JATQuote-PostgreSQL", numa porta própria a partir da 5433, aceitando só conexões da própria
+   máquina), o **Node.js**, o **Chromium** dos PDFs, o banco com senhas aleatórias, a inicialização
+   com o Windows, o backup diário e a regra do Firewall.
+4. A tela final mostra o **endereço de acesso** e a **senha temporária do Admin** (uma única vez;
+   anote). Cria também o atalho "JAT Quote" no menu Iniciar.
+
+- **Atualizar**: rode o setup de uma versão nova no mesmo servidor. Ele reaproveita as respostas,
+  faz backup do banco, para o sistema, atualiza os arquivos, aplica as migrations e inicia de novo.
+- **Desinstalar**: Configurações → Aplicativos → JAT Quote. Ele pergunta se deve apagar também o
+  banco, os backups e os logs (o padrão é manter).
+- Os scripts de "No dia a dia do servidor" e de backup e restauração continuam valendo na pasta
+  instalada. Para recuperar a senha do Admin: `scripts\recuperar-acesso.ps1` (como Administrador).
+- **Gerar o setup** (máquina de desenvolvimento): instale o Inno Setup 6
+  (`winget install JRSoftware.InnoSetup`), coloque em `instalador\cache` os zips oficiais
+  `node-v26.13.0-win-x64.zip` (nodejs.org) e `postgresql-18.6-1-windows-x64-binaries.zip`
+  (enterprisedb.com) e rode `powershell -ExecutionPolicy Bypass -File scripts\gerar-instalador.ps1`.
+  O resultado sai em `instalador\saida`.
+
+## Instalação no servidor pelo script (alternativa)
+
+Para quem prefere usar o Node.js e o PostgreSQL já instalados no servidor.
 
 **1. Instale os pré-requisitos** (uma vez):
 

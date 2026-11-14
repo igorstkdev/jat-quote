@@ -157,6 +157,7 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
   - O sistema roda **sozinho com a máquina** e se reinicia se cair (Agendador de Tarefas do Windows, sem programas extras).
   - **Backup diário às 23h**, guardando as **30 cópias** mais recentes (`pg_dump`).
   - **Migração do Base44 sem cotações antigas**: entram só os cadastros (clientes, tarifas aéreas, tabelas FTL). As cotações começam do zero, em `JQ-000001`.
+- Decisão de 14/11/2026: **instalador gráfico** (`JAT-Quote-Setup-<versão>.exe`, Inno Setup, gratuito) que **instala tudo** (PostgreSQL, Node.js e Chromium embutidos, sem internet) e pergunta pasta, porta, login do Admin, pasta/horário/cópias do backup e liberação em rede pública. O script `instalar.ps1` continua como alternativa.
 - ⚠️ Pendente: nome do usuário Admin do servidor (o instalador pergunta) e os CSVs reais exportados do Base44.
 
 ## 4. Padrões de qualidade

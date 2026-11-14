@@ -16,9 +16,7 @@ $pastaLogs = Join-Path $raiz 'logs'
 $log = Join-Path $pastaLogs 'jat-quote.log'
 if (-not (Test-Path $pastaLogs)) { New-Item -ItemType Directory $pastaLogs | Out-Null }
 
-$node = (Get-Command node.exe -ErrorAction SilentlyContinue).Source
-if (-not $node) { $node = Join-Path $env:ProgramFiles 'nodejs\node.exe' }
-if (-not (Test-Path $node)) { Write-Log 'Node.js não encontrado.' -Arquivo servico -Nivel Erro; exit 1 }
+try { $node = Get-Node } catch { Write-Log 'Node.js não encontrado.' -Arquivo servico -Nivel Erro; exit 1 }
 if (-not (Test-Path $servidor)) { Write-Log "Sistema não compilado ($servidor). Rode o instalador." -Arquivo servico -Nivel Erro; exit 1 }
 
 # Ambiente do sistema: produção e Chromium do PDF numa pasta do próprio sistema

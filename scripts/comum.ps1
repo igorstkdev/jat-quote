@@ -78,6 +78,17 @@ function Write-Log {
   Write-Host $Mensagem -ForegroundColor $cor
 }
 
+<# node.exe: o que vem no pacote do instalador (runtime\node) ou o instalado no Windows. #>
+function Get-Node {
+  $embutido = Join-Path $script:Raiz 'runtime\node\node.exe'
+  if (Test-Path $embutido) { return $embutido }
+  $cmd = Get-Command node.exe -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+  $padrao = Join-Path $env:ProgramFiles 'nodejs\node.exe'
+  if (Test-Path $padrao) { return $padrao }
+  throw 'Node.js não encontrado.'
+}
+
 function Test-Administrador {
   $p = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
   return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
