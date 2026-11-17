@@ -58,7 +58,7 @@ export default function InicioPage() {
                     Fase {m.fase}
                   </span>
                 ) : (
-                  <ArrowUpRight className="text-muted-foreground group-hover:text-primary size-4 transition-colors" />
+                  <ArrowUpRight className="text-muted-foreground group-hover:text-quote size-4 transition-colors" />
                 )}
               </div>
               <div className="mt-4">

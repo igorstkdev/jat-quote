@@ -6,16 +6,22 @@
 
 /*
  * Tokens de tema do JAT Quote.
- * TODAS as cores da interface vêm daqui. Quando a identidade visual da JAT chegar,
- * basta trocar os valores de --brand / --brand-accent (e, se preciso, os demais).
+ * TODAS as cores da interface vêm daqui. Duas marcas juntas (16/11/2026):
+ *   --brand = azul da JAT (cliente) — ações, seleção, foco.
+ *   --quote = laranja do Quote (produto) — só detalhes: indicadores, filetes, ícones.
+ * O laranja nunca é usado como cor de texto pequeno no tema claro (contraste baixo);
+ * para texto use --quote-texto.
  */
 :root {
   --radius: 0.625rem;
 
-  /* Identidade (placeholder até receber as cores oficiais) */
+  /* Identidade */
   --brand: oklch(0.405 0.137 264); /* azul JAT #1F428A (logo oficial) */
   --brand-foreground: oklch(0.99 0 0);
-  --brand-accent: oklch(0.68 0.19 45); /* laranja */
+  --quote: oklch(0.73 0.175 52); /* laranja Quote #FD8B21 (logo) */
+  --quote-2: oklch(0.81 0.16 72); /* fim do degradê da seta #FEAE2E */
+  --quote-texto: oklch(0.55 0.15 48); /* laranja legível sobre fundo claro */
+  --brand-accent: var(--quote);
 
   --background: oklch(0.985 0.002 264);
   --foreground: oklch(0.2 0.02 264);
@@ -60,7 +66,10 @@
 .dark {
   --brand: oklch(0.68 0.14 262); /* azul JAT clareado para fundo escuro */
   --brand-foreground: oklch(0.15 0.02 264);
-  --brand-accent: oklch(0.74 0.16 50);
+  --quote: oklch(0.76 0.16 56);
+  --quote-2: oklch(0.83 0.15 74);
+  --quote-texto: oklch(0.8 0.14 60);
+  --brand-accent: var(--quote);
 
   --background: oklch(0.155 0.012 264);
   --foreground: oklch(0.95 0.005 264);
@@ -127,6 +136,9 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-accent: var(--brand-accent);
+  --color-quote: var(--quote);
+  --color-quote-2: var(--quote-2);
+  --color-quote-texto: var(--quote-texto);
   --color-success: var(--success);
   --color-sidebar: var(--sidebar);
   --color-destaque-mkup: var(--destaque-mkup);
@@ -165,6 +177,17 @@
   kbd {
     @apply bg-muted text-muted-foreground inline-flex h-5 items-center gap-1 rounded border px-1.5 font-sans text-[11px] font-medium;
   }
+}
+
+/* Filete das duas marcas: azul JAT → laranja Quote. */
+@utility filete-marcas {
+  background-image: linear-gradient(
+    90deg,
+    var(--brand) 0%,
+    var(--brand) 55%,
+    var(--quote) 85%,
+    var(--quote-2) 100%
+  );
 }
 
 /* Valores monetários e números: sempre tabulares (CLAUDE.md §5). */

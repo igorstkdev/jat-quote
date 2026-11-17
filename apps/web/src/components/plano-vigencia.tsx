@@ -33,7 +33,7 @@ export function PlanoVigencia() {
             <dl className="grid gap-3 text-sm">
               <Linha rotulo="Situação">
                 {data.aviso ? (
-                  <Badge className="bg-brand-accent/12 text-brand-accent border-transparent">
+                  <Badge className="bg-quote/12 text-quote-texto border-transparent">
                     <CalendarClock className="size-3" />
                     Vence em breve
                   </Badge>

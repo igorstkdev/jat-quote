@@ -48,59 +48,62 @@ export function AppLayout() {
   }, [atual]);
 
   return (
-    <div className="flex h-svh overflow-hidden">
-      <div className="hidden md:block">
-        <Sidebar recolhido={recolhido} onAlternar={alternarMenu} />
+    <div className="flex h-svh flex-col overflow-hidden">
+      {/* Filete azul JAT → laranja Quote (as duas marcas juntas). */}
+      <div aria-hidden className="filete-marcas h-[3px] shrink-0" />
+      <div className="flex min-h-0 flex-1">
+        <div className="hidden md:block">
+          <Sidebar recolhido={recolhido} onAlternar={alternarMenu} />
+        </div>
+        <Sheet open={menuMovel} onOpenChange={setMenuMovel}>
+          <SheetContent side="left" className="w-64 p-0">
+            <SheetTitle className="sr-only">Menu</SheetTitle>
+            <Sidebar
+              recolhido={false}
+              onAlternar={() => setMenuMovel(false)}
+              onNavegar={() => setMenuMovel(false)}
+            />
+          </SheetContent>
+        </Sheet>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="bg-background/80 flex h-16 shrink-0 items-center gap-3 border-b px-4 backdrop-blur md:px-6">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMenuMovel(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu />
+            </Button>
+            <div className="min-w-0 text-sm font-medium">{atual?.rotulo ?? ''}</div>
+
+            <button
+              type="button"
+              onClick={() => setPaleta(true)}
+              className="bg-muted/60 text-muted-foreground hover:bg-muted ml-auto flex h-9 w-full max-w-xs items-center gap-2 rounded-lg border px-3 text-sm transition-colors"
+              aria-label="Abrir paleta de comandos"
+            >
+              <Search className="size-4" />
+              <span className="truncate">Buscar telas e ações…</span>
+              <kbd className="ml-auto hidden sm:inline-flex">Ctrl K</kbd>
+            </button>
+            <ThemeToggle />
+            <UserMenu />
+          </header>
+
+          <AvisoLicencaAdmin />
+          <main className="flex flex-1 flex-col overflow-y-auto">
+            <div className="flex-1">
+              <Suspense fallback={<CarregandoPagina />}>
+                <Outlet />
+              </Suspense>
+            </div>
+            <Rodape className="border-t" />
+          </main>
+        </div>
       </div>
-      <Sheet open={menuMovel} onOpenChange={setMenuMovel}>
-        <SheetContent side="left" className="w-64 p-0">
-          <SheetTitle className="sr-only">Menu</SheetTitle>
-          <Sidebar
-            recolhido={false}
-            onAlternar={() => setMenuMovel(false)}
-            onNavegar={() => setMenuMovel(false)}
-          />
-        </SheetContent>
-      </Sheet>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="bg-background/80 flex h-16 shrink-0 items-center gap-3 border-b px-4 backdrop-blur md:px-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMenuMovel(true)}
-            aria-label="Abrir menu"
-          >
-            <Menu />
-          </Button>
-          <div className="min-w-0 text-sm font-medium">{atual?.rotulo ?? ''}</div>
-
-          <button
-            type="button"
-            onClick={() => setPaleta(true)}
-            className="bg-muted/60 text-muted-foreground hover:bg-muted ml-auto flex h-9 w-full max-w-xs items-center gap-2 rounded-lg border px-3 text-sm transition-colors"
-            aria-label="Abrir paleta de comandos"
-          >
-            <Search className="size-4" />
-            <span className="truncate">Buscar telas e ações…</span>
-            <kbd className="ml-auto hidden sm:inline-flex">Ctrl K</kbd>
-          </button>
-          <ThemeToggle />
-          <UserMenu />
-        </header>
-
-        <AvisoLicencaAdmin />
-        <main className="flex flex-1 flex-col overflow-y-auto">
-          <div className="flex-1">
-            <Suspense fallback={<CarregandoPagina />}>
-              <Outlet />
-            </Suspense>
-          </div>
-          <Rodape className="border-t" />
-        </main>
-      </div>
-
       <CommandPalette aberto={paleta} onAbertoChange={setPaleta} onAlternarMenu={alternarMenu} />
     </div>
   );

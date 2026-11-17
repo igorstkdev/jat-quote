@@ -195,6 +195,8 @@ Objetivo: interface **profissional e impressionante**, no nível de produtos Saa
 
 - Tema claro e escuro, com alternância.
 - Identidade JAT: logo oficial em `apps/web/public/brand/logo-jat.png` (recebida em 07/11/2026; fica branca no tema escuro). Cor principal = azul da logo **#1F428A**. Cores sempre via tokens (CSS variables). Uma versão vetorial (SVG) da logo melhoraria a nitidez no PDF.
+- **Duas marcas** (16/11/2026): o **Quote** é a marca do produto e a **JAT** é a empresa atendida. As logos aparecem lado a lado (JAT | Quote) no menu, no login (maiores, canto superior esquerdo) e na tela de ativação. Logo do Quote: original em `apps/web/public/brand/logo-quote-original.png` ("Q" branco, para fundo escuro); `scripts/gerar-logos-quote.ps1` gera a versão de fundo claro ("Q" no azul JAT), as compactas e o favicon.
+- **Paleta**: azul JAT (`--brand`) nas ações, seleção e foco; laranja do Quote (`--quote` #FD8B21 → `--quote-2` #FEAE2E) só em detalhes: filete azul→laranja no topo, indicador do menu, destaques. Texto em laranja só com `--quote-texto` (contraste).
 - Tipografia Inter ou Geist; números tabulares nos valores monetários.
 - Layout: sidebar recolhível, cabeçalho com usuário e perfil, paleta de comandos (Ctrl+K), atalhos de teclado nas ações frequentes.
 - Feedback: skeletons no carregamento, toasts nas ações, estados vazios bem desenhados, confirmação em ações destrutivas.

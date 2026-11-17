@@ -60,7 +60,7 @@ export default function LoginPage() {
           }}
         />
         <div className="relative flex h-full flex-col justify-between p-12 text-white">
-          <Logo branco />
+          <Logo branco tamanho="lg" />
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -68,7 +68,10 @@ export default function LoginPage() {
             className="max-w-md"
           >
             <h1 className="text-4xl leading-tight font-semibold tracking-tight text-balance">
-              Cotações de frete rápidas, precisas e rastreáveis.
+              Cotações de frete rápidas, precisas e{' '}
+              <span className="from-quote to-quote-2 bg-gradient-to-r bg-clip-text text-transparent">
+                rastreáveis.
+              </span>
             </h1>
             <p className="mt-4 text-white/70">
               Aéreo, rodoviário e FTL em um só lugar, com cálculo em tempo real e histórico completo

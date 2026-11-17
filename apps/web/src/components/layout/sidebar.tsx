@@ -135,7 +135,7 @@ function ItemMenu({
         {({ isActive }) => (
           <>
             {isActive && (
-              <span className="bg-primary absolute top-1.5 bottom-1.5 -left-3 w-[3px] rounded-r-full" />
+              <span className="from-quote to-quote-2 absolute top-1.5 bottom-1.5 -left-3 w-[3px] rounded-r-full bg-gradient-to-b" />
             )}
             <Icone className="size-4 shrink-0" />
             {!recolhido && <span className="truncate">{item.rotulo}</span>}
