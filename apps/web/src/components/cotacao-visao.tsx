@@ -20,7 +20,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { Cotacao } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { BlocoTermos, termosDaCotacao } from '@/components/termos';
+import { api, type Configuracoes, type Cotacao } from '@/lib/api';
 import { formatData, formatDataHora } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { ROTULO_LOCALIDADE, ROTULO_VEICULO } from '@/pages/ftl/comum';
@@ -181,6 +183,7 @@ function VisaoCliente({ q }: { q: Cotacao }) {
       <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-2.5 text-xs">
         {textoCondicaoAdValorem(q.adValoremPct)}
       </p>
+      <TermosVisao q={q} />
       {q.notes && (
         <div className="text-sm">
           <div className="text-muted-foreground mb-1 text-xs font-medium">Observações</div>
@@ -240,6 +243,7 @@ function VisaoOperacaoSpot({ q }: { q: Cotacao }) {
           </>
         )}
       </p>
+      <TermosVisao q={q} />
       {q.notes && (
         <div className="text-sm">
           <div className="text-muted-foreground mb-1 text-xs font-medium">Observações</div>
@@ -296,5 +300,20 @@ function Item({ rotulo, children }: { rotulo: string; children: ReactNode }) {
       <dt className="text-muted-foreground text-xs">{rotulo}</dt>
       <dd className="tabular mt-0.5 font-medium">{children}</dd>
     </div>
+  );
+}
+
+/** Termos e condições gravados na cotação (ou os atuais, nas cotações antigas). */
+function TermosVisao({ q }: { q: Cotacao }) {
+  const cfg = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get<Configuracoes>('/api/settings'),
+    enabled: !q.terms,
+  });
+  return (
+    <BlocoTermos
+      condicoes={termosDaCotacao(q, cfg.data)}
+      titulo={q.modal === 'FTL' ? 'Condições comerciais' : 'Termos e condições'}
+    />
   );
 }

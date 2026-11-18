@@ -5,8 +5,10 @@ import {
   formatNumero,
   formatPercentual,
   linkEmailCotacaoFtl,
+  textoCondicoes,
   textoCotacaoFtl,
   UFS,
+  type Condicoes,
   type DadosTextoFtl,
   type ResultadoFtl,
 } from '@jat/core';
@@ -42,6 +44,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { BlocoTermos } from '@/components/termos';
 import {
   api,
   ApiError,
@@ -147,6 +150,9 @@ export function CalculadoraFtl() {
   const salva = cotacao ? formDaCotacao(cotacao) : null;
   const alterado = !!salva && JSON.stringify(salva) !== JSON.stringify(form);
   const vazio = JSON.stringify(form) === JSON.stringify(VAZIO);
+  // Condições do veículo: as gravadas na cotação salva (sem alterações) ou as atuais.
+  const condicoesAtuais: Condicoes | null =
+    (cotacao && !alterado ? cotacao.terms : null) ?? cfg.data?.condicoesFtl[form.veiculo] ?? null;
 
   const set = <K extends keyof FormFtl>(k: K, v: FormFtl[K]) => setForm((f) => ({ ...f, [k]: v }));
   const escolherUf = (uf: string) => {
@@ -204,7 +210,7 @@ export function CalculadoraFtl() {
       total: resultado.total,
       adValoremPct: resultado.adValorem.pct,
       data: cotacao && !alterado ? new Date(cotacao.createdAt) : new Date(),
-      condicoes: cfg.data?.condicoesFtl ?? '',
+      condicoes: textoCondicoes(condicoesAtuais),
       observacoes: form.obs,
     };
   };
@@ -440,7 +446,7 @@ export function CalculadoraFtl() {
           resultado={resultado}
           cotacao={cotacao}
           alterado={alterado}
-          condicoes={cfg.data?.condicoesFtl}
+          condicoes={cfg.data ? condicoesAtuais : undefined}
         />
       </div>
 
@@ -469,7 +475,7 @@ function PainelFtl({
   resultado: ResultadoFtl | null;
   cotacao: Cotacao | null;
   alterado: boolean;
-  condicoes: string | undefined;
+  condicoes: Condicoes | null | undefined;
 }) {
   return (
     <div className="bg-card overflow-hidden rounded-2xl border shadow-sm" aria-live="polite">
@@ -550,9 +556,13 @@ function PainelFtl({
         {condicoes === undefined ? (
           <Skeleton className="h-16 w-full" />
         ) : (
-          <p className="text-muted-foreground max-h-40 overflow-y-auto text-xs leading-relaxed whitespace-pre-wrap">
-            {condicoes}
-          </p>
+          <div className="max-h-48 overflow-y-auto">
+            <BlocoTermos
+              condicoes={condicoes}
+              titulo=""
+              vazio="Sem condições comerciais para este veículo."
+            />
+          </div>
         )}
       </div>
     </div>

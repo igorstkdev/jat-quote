@@ -1,5 +1,5 @@
 import { dataIsoParaBR, ROTULO_PLANO } from '@jat/core';
-import { CalendarCheck2, CalendarClock } from 'lucide-react';
+import { CalendarCheck2, CalendarClock, InfinityIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { FormAtivacao } from '@/components/licenca';
 import { Badge } from '@/components/ui/badge';
@@ -43,15 +43,23 @@ export function PlanoVigencia() {
               </Linha>
               <Linha rotulo="Plano">{ROTULO_PLANO[data.plano]}</Linha>
               <Linha rotulo="Vence em">
-                <span className="font-semibold tabular-nums">{dataIsoParaBR(data.vencimento)}</span>
-                {data.diasRestantes != null && (
-                  <span className="text-muted-foreground ml-1.5">
-                    (
-                    {data.diasRestantes === 0
-                      ? 'hoje'
-                      : `${data.diasRestantes} ${data.diasRestantes === 1 ? 'dia' : 'dias'}`}
-                    )
-                  </span>
+                {data.plano === 'VITALICIO' ? (
+                  <span className="font-semibold">Sem vencimento</span>
+                ) : (
+                  <>
+                    <span className="font-semibold tabular-nums">
+                      {dataIsoParaBR(data.vencimento)}
+                    </span>
+                    {data.diasRestantes != null && (
+                      <span className="text-muted-foreground ml-1.5">
+                        (
+                        {data.diasRestantes === 0
+                          ? 'hoje'
+                          : `${data.diasRestantes} ${data.diasRestantes === 1 ? 'dia' : 'dias'}`}
+                        )
+                      </span>
+                    )}
+                  </>
                 )}
               </Linha>
               {data.ativadoEm && (
@@ -75,7 +83,14 @@ export function PlanoVigencia() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <FormAtivacao comCredenciais={false} rotuloBotao="Renovar plano" />
+          {data?.plano === 'VITALICIO' ? (
+            <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-10 text-center text-sm">
+              <InfinityIcon className="text-quote size-6" />O plano Vitalício não vence: não é
+              preciso renovar.
+            </div>
+          ) : (
+            <FormAtivacao comCredenciais={false} rotuloBotao="Renovar plano" />
+          )}
         </CardContent>
       </Card>
     </div>

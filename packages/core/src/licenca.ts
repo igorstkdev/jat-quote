@@ -5,22 +5,29 @@ import { hojeIso, type DataIso } from './datas.js';
  * O Admin ativa com a senha mestre de ativação escolhendo um plano. O prazo conta em meses de
  * calendário e o sistema vale até o FIM do dia do vencimento (fuso de São Paulo).
  * Renovar antes de vencer SOMA ao tempo que falta.
+ * Vitalício (17/11/2026): sem vencimento e sem aviso.
  */
-export const PLANOS_LICENCA = ['MENSAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL'] as const;
+export const PLANOS_LICENCA = ['MENSAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL', 'VITALICIO'] as const;
 export type PlanoLicenca = (typeof PLANOS_LICENCA)[number];
 
-export const MESES_PLANO: Readonly<Record<PlanoLicenca, number>> = Object.freeze({
+/** Meses de cada plano. Vitalício = null (não vence). */
+export const MESES_PLANO: Readonly<Record<PlanoLicenca, number | null>> = Object.freeze({
   MENSAL: 1,
   TRIMESTRAL: 3,
   SEMESTRAL: 6,
   ANUAL: 12,
+  VITALICIO: null,
 });
+
+/** "Data" de vencimento gravada no plano Vitalício (não é mostrada). */
+export const VENCIMENTO_VITALICIO = '9999-12-31';
 
 export const ROTULO_PLANO: Readonly<Record<PlanoLicenca, string>> = Object.freeze({
   MENSAL: 'Mensal',
   TRIMESTRAL: 'Trimestral',
   SEMESTRAL: 'Semestral',
   ANUAL: 'Anual',
+  VITALICIO: 'Vitalício',
 });
 
 /** Os Admins são avisados quando faltam até 15 dias para vencer. */
@@ -56,15 +63,20 @@ export function calcularVencimento(
   hoje: DataIso,
   vencimentoAtual: DataIso | null = null,
 ): DataIso {
-  const base = vencimentoAtual && vencimentoAtual >= hoje ? vencimentoAtual : hoje;
-  return somarMeses(base, MESES_PLANO[plano]);
+  const meses = MESES_PLANO[plano];
+  if (meses === null) return VENCIMENTO_VITALICIO;
+  const base =
+    vencimentoAtual && vencimentoAtual !== VENCIMENTO_VITALICIO && vencimentoAtual >= hoje
+      ? vencimentoAtual
+      : hoje;
+  return somarMeses(base, meses);
 }
 
 export type SituacaoLicenca = 'NAO_ATIVADA' | 'ATIVA' | 'VENCIDA';
 
 export interface EstadoVigencia {
   situacao: SituacaoLicenca;
-  /** Dias até o vencimento (0 = vence hoje). null se não ativada. */
+  /** Dias até o vencimento (0 = vence hoje). null se não ativada ou vitalícia. */
   diasRestantes: number | null;
   /** Faltam até 15 dias (e ainda está ativa). */
   aviso: boolean;
@@ -76,6 +88,9 @@ export function situacaoVigencia(
   agora: Date = new Date(),
 ): EstadoVigencia {
   if (!vencimento) return { situacao: 'NAO_ATIVADA', diasRestantes: null, aviso: false };
+  if (vencimento === VENCIMENTO_VITALICIO) {
+    return { situacao: 'ATIVA', diasRestantes: null, aviso: false };
+  }
   const dias = diasEntre(hojeIso(agora), vencimento);
   if (dias < 0) return { situacao: 'VENCIDA', diasRestantes: dias, aviso: false };
   return { situacao: 'ATIVA', diasRestantes: dias, aviso: dias <= AVISO_VENCIMENTO_DIAS };

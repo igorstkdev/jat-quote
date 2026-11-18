@@ -1,4 +1,10 @@
-import { AD_VALOREM_PADRAO } from '@jat/core';
+import {
+  AD_VALOREM_PADRAO,
+  condicoesVazias,
+  lerCondicoes,
+  TOPICOS_AEREO_PADRAO,
+  type Condicoes,
+} from '@jat/core';
 import type { Db } from '../db.js';
 
 /** Chaves das configurações do sistema (tabela settings). */
@@ -6,6 +12,10 @@ export const CHAVES = {
   adValorem: 'ad_valorem_padrao',
   condicoesFtl: 'condicoes_comerciais_ftl',
   linksRastreio: 'links_rastreio',
+  /** Condições Spot por modal (17/11/2026). */
+  condicoesSpot: 'condicoes_spot',
+  /** Condições FTL por veículo (17/11/2026). Substitui condicoes_comerciais_ftl. */
+  condicoesFtlVeiculos: 'condicoes_ftl_veiculos',
 } as const;
 
 export interface AdValoremPadrao {
@@ -33,9 +43,49 @@ export async function lerAdValoremPadrao(db: Db): Promise<AdValoremPadrao> {
   };
 }
 
-export async function lerCondicoesFtl(db: Db): Promise<string> {
+/** Texto único antigo das condições FTL (antes de 17/11/2026): ponto de partida dos 3 veículos. */
+async function lerCondicoesFtlAntigas(db: Db): Promise<string> {
   const s = await db.setting.findUnique({ where: { key: CHAVES.condicoesFtl } });
   return typeof s?.value === 'string' ? s.value : CONDICOES_FTL_PADRAO;
+}
+
+export const MODAIS_SPOT = ['RODOVIARIO', 'AEREO'] as const;
+export type ModalSpot = (typeof MODAIS_SPOT)[number];
+export const VEICULOS_CONDICOES = ['UTILITARIO', 'VAN', 'TRES_QUARTOS'] as const;
+export type VeiculoCondicoes = (typeof VEICULOS_CONDICOES)[number];
+
+export type CondicoesSpot = Record<ModalSpot, Condicoes>;
+export type CondicoesFtl = Record<VeiculoCondicoes, Condicoes>;
+
+/** Padrões: Aéreo com os tópicos de referência; Rodoviário vazio (texto ainda não informado). */
+export const CONDICOES_SPOT_PADRAO: CondicoesSpot = {
+  RODOVIARIO: condicoesVazias('TOPICOS'),
+  AEREO: { formato: 'TOPICOS', topicos: [...TOPICOS_AEREO_PADRAO], texto: '' },
+};
+
+export async function lerCondicoesSpot(db: Db): Promise<CondicoesSpot> {
+  const s = await db.setting.findUnique({ where: { key: CHAVES.condicoesSpot } });
+  const v = (s?.value ?? null) as Partial<Record<ModalSpot, unknown>> | null;
+  return {
+    RODOVIARIO: v?.RODOVIARIO ? lerCondicoes(v.RODOVIARIO) : CONDICOES_SPOT_PADRAO.RODOVIARIO,
+    AEREO: v?.AEREO ? lerCondicoes(v.AEREO) : CONDICOES_SPOT_PADRAO.AEREO,
+  };
+}
+
+/** Condições FTL por veículo. Sem configuração ainda: os 3 começam com o texto antigo (texto livre). */
+export async function lerCondicoesFtl(db: Db): Promise<CondicoesFtl> {
+  const s = await db.setting.findUnique({ where: { key: CHAVES.condicoesFtlVeiculos } });
+  const v = (s?.value ?? null) as Partial<Record<VeiculoCondicoes, unknown>> | null;
+  const antigo: Condicoes = {
+    formato: 'TEXTO',
+    topicos: [],
+    texto: await lerCondicoesFtlAntigas(db),
+  };
+  return {
+    UTILITARIO: v?.UTILITARIO ? lerCondicoes(v.UTILITARIO) : antigo,
+    VAN: v?.VAN ? lerCondicoes(v.VAN) : antigo,
+    TRES_QUARTOS: v?.TRES_QUARTOS ? lerCondicoes(v.TRES_QUARTOS) : antigo,
+  };
 }
 
 export interface LinkRastreio {

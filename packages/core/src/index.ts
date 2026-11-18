@@ -87,9 +87,24 @@ export {
   MESES_PLANO,
   ROTULO_PLANO,
   AVISO_VENCIMENTO_DIAS,
+  VENCIMENTO_VITALICIO,
   somarMeses,
   diasEntre,
   calcularVencimento,
   situacaoVigencia,
 } from './licenca.js';
 export type { PlanoLicenca, SituacaoLicenca, EstadoVigencia } from './licenca.js';
+export {
+  FORMATOS_CONDICOES,
+  MAX_TOPICOS,
+  MAX_TAMANHO_TOPICO,
+  MAX_TAMANHO_TEXTO,
+  TOPICOS_AEREO_PADRAO,
+  condicoesVazias,
+  topicosLimpos,
+  normalizarCondicoes,
+  temCondicoes,
+  textoCondicoes,
+  lerCondicoes,
+} from './condicoes.js';
+export type { FormatoCondicoes, Condicoes } from './condicoes.js';

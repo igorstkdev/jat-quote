@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { CotacaoVisaoSheet, IconeModal, type Visao } from '@/components/cotacao-visao';
 import { DataTable, type Coluna } from '@/components/data-table';
+import { AcoesDadosTeste, SeloTeste } from '@/components/dados-teste';
 import { EmptyState, Page, PageHeader, Segmentado } from '@/components/page';
 import { PeriodoSelect, type ValorPeriodo } from '@/components/periodo-select';
 import { ROTULO_STATUS, StatusBadge } from '@/components/status-badge';
@@ -265,6 +266,12 @@ export default function RelatoriosPage() {
       ),
     },
     {
+      id: 'teste',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => (row.original.isTestData ? <SeloTeste /> : null),
+    },
+    {
       id: 'createdAt',
       accessorKey: 'createdAt',
       header: 'Data',
@@ -392,13 +399,16 @@ export default function RelatoriosPage() {
         titulo="Relatório Spot"
         descricao="Cotações aéreas e rodoviárias: filtre, acompanhe o status e exporte para o Excel."
         acoes={
-          <Button
-            onClick={() => void exportar()}
-            disabled={exportando || !stats || stats.count === 0}
-          >
-            {exportando ? <Loader2 className="animate-spin" /> : <FileSpreadsheet />}
-            Exportar Excel
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {admin && <AcoesDadosTeste onAlterado={recarregar} />}
+            <Button
+              onClick={() => void exportar()}
+              disabled={exportando || !stats || stats.count === 0}
+            >
+              {exportando ? <Loader2 className="animate-spin" /> : <FileSpreadsheet />}
+              Exportar Excel
+            </Button>
+          </div>
         }
       />
 

@@ -173,4 +173,18 @@ describe('Licença (plano de vigência)', () => {
     expect(r.json()).toMatchObject({ bloqueado: false, vencimento: '2027-12-14' });
     await app.close();
   });
+
+  it('Vitalício: não vence, não avisa e não volta para plano com prazo', async () => {
+    let app = await criarApp();
+    const r = await ativar(app, { ...ATIVAR_ADMIN, plano: 'VITALICIO' });
+    expect(r.json()).toMatchObject({ bloqueado: false, plano: 'VITALICIO', aviso: false });
+    const volta = await ativar(app, { ...ATIVAR_ADMIN, plano: 'MENSAL' });
+    expect(volta.statusCode).toBe(409);
+    await app.close();
+
+    relogio = new Date('2060-06-01T12:00:00-03:00');
+    app = await criarApp();
+    expect(await estado(app)).toMatchObject({ bloqueado: false });
+    await app.close();
+  });
 });

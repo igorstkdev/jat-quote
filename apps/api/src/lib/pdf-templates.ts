@@ -9,6 +9,9 @@ import {
   formatPercentual,
   ROTULO_MODAL,
   VALIDADE_COTACAO_DIAS,
+  topicosLimpos,
+  temCondicoes,
+  type Condicoes,
   type ResultadoSpot,
 } from '@jat/core';
 
@@ -23,6 +26,8 @@ export interface DadosPdf {
   geradoPor: string;
   geradoEm: Date;
   observacoes: string | null;
+  /** Termos e condições do modal (17/11/2026). */
+  termos: Condicoes | null;
   resultado: ResultadoSpot;
   logoDataUrl: string;
 }
@@ -77,6 +82,9 @@ const CSS = `
   .total .val { font-size: 26pt; font-weight: 700; font-variant-numeric: tabular-nums; }
   h2 { font-size: 10pt; text-transform: uppercase; letter-spacing: .1em; color: #475569; margin: 9mm 0 3mm; }
   ul.cond { margin: 0; padding-left: 5mm; line-height: 1.6; }
+  ul.termos { margin: 0; padding-left: 5mm; line-height: 1.5; font-size: 9.5pt; color: #334155; }
+  ul.termos li { margin-bottom: .8mm; }
+  .termos-texto { white-space: pre-wrap; font-size: 9.5pt; line-height: 1.5; color: #334155; }
   .obs { white-space: pre-wrap; background: #f8fafc; border-left: 3px solid #1F428A; padding: 3mm 4mm; border-radius: 1mm; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   td { padding: 2mm 0; }
@@ -143,6 +151,18 @@ function infosCompactas(d: DadosPdf) {
     </div>`;
 }
 
+/** Bloco de termos e condições: lista (tópicos) ou texto livre. Vazio = nada. */
+function blocoTermos(c: Condicoes | null, titulo = 'Termos e condições') {
+  if (!temCondicoes(c)) return '';
+  const corpo =
+    c.formato === 'TOPICOS'
+      ? `<ul class="termos">${topicosLimpos(c)
+          .map((t) => `<li>${esc(t)}</li>`)
+          .join('')}</ul>`
+      : `<div class="termos-texto">${esc(c.texto.trim())}</div>`;
+  return `<h2>${esc(titulo)}</h2>${corpo}`;
+}
+
 function documento(corpo: string) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>${CSS}</style></head>
     <body><div class="pagina">${corpo}</div></body></html>`;
@@ -161,6 +181,7 @@ export function htmlCotacaoCliente(d: DadosPdf): string {
       <li>${esc(r.adValorem.condicao)}</li>
       <li>Validade da cotação: ${VALIDADE_COTACAO_DIAS} dias, até ${validade}.</li>
     </ul>
+    ${blocoTermos(d.termos)}
     ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}
     </div>
     ${rodape(d)}
@@ -201,6 +222,7 @@ export function htmlCotacaoOperacao(d: DadosPdf): string {
     <div class="total menor"><div class="rot">Total do frete</div><div class="val">${formatBRL(r.total)}</div></div>
     <h2>Ad valorem (informativo)</h2>
     <ul class="cond"><li>${esc(r.adValorem.condicao)}${esc(est)}</li></ul>
+    ${blocoTermos(d.termos)}
     ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}
     ${rodape(d)}
   `);
@@ -216,7 +238,8 @@ export interface DadosPdfFtl {
   tarifaKm: string;
   total: string;
   adValoremPct: string;
-  condicoes: string;
+  /** Condições comerciais do veículo (gravadas na cotação). */
+  condicoes: Condicoes | null;
   criadaEm: Date;
   geradoPor: string;
   geradoEm: Date;
@@ -238,8 +261,7 @@ export function htmlCotacaoFtl(d: DadosPdfFtl): string {
       ${campo('Ad valorem', `${formatPercentual(d.adValoremPct)} sobre a nota fiscal (cobrado adicionalmente)`)}
     </div>
     <div class="total"><div class="rot">Valor do frete</div><div class="val">${formatBRL(d.total)}</div></div>
-    <h2>Condições comerciais</h2>
-    <div class="obs">${esc(d.condicoes)}</div>
+    ${blocoTermos(d.condicoes, 'Condições comerciais')}
     ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}
     <footer><span>JAT Transportes e Logística S/A</span><span>Gerado pelo JAT Quote em ${dataHora(d.geradoEm)} por ${esc(d.geradoPor)}</span></footer>
   `);

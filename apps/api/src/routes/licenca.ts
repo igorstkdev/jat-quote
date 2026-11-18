@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Db } from '../db.js';
 import { registrarAuditoria } from '../lib/audit.js';
-import { HttpError, requisicaoInvalida } from '../lib/errors.js';
+import { conflito, HttpError, requisicaoInvalida } from '../lib/errors.js';
 import {
   BLOQUEIO_ATIVACAO_MINUTOS,
   MAX_TENTATIVAS_ATIVACAO,
@@ -69,6 +69,12 @@ export function licencaRoutes(db: Db, controle: ControleLicenca) {
 
         // 2) Quem ativa é um Admin: o logado ou o informado (usuário + senha).
         const admin = await identificarAdmin(db, req, dados.usuario, dados.senha);
+
+        // Vitalício não volta para um plano com prazo (17/11/2026).
+        const atual = (await controle.estado()).licenca;
+        if (atual?.plano === 'VITALICIO' && dados.plano !== 'VITALICIO') {
+          throw conflito('O sistema já tem o plano Vitalício: não é preciso renovar.', 'plano');
+        }
 
         // 3) Senha mestre.
         const r = await controle.ativar(dados.senhaMestre, dados.plano, admin.username);

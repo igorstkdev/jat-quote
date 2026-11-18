@@ -16,6 +16,7 @@ import { healthRoutes } from './routes/health.js';
 import { settingsRoutes } from './routes/settings.js';
 import { userRoutes } from './routes/users.js';
 import { quoteRoutes } from './routes/quotes.js';
+import { quoteImportRoutes } from './routes/quotes-import.js';
 import { airRateRoutes } from './routes/air-rates.js';
 import { ftlRoutes } from './routes/ftl.js';
 import { reportRoutes } from './routes/reports.js';
@@ -123,6 +124,7 @@ export async function buildApp({
   await app.register(clientRoutes(db));
   await app.register(settingsRoutes(db));
   await app.register(auditRoutes(db));
+  await app.register(quoteImportRoutes(db));
   await app.register(quoteRoutes(db));
   await app.register(airRateRoutes(db));
   await app.register(ftlRoutes(db));

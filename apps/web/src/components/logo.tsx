@@ -14,6 +14,23 @@ const LOGOS_QUOTE = {
     escuro: '/brand/logo-quote-compacta-branco.png',
   },
 } as const;
+/** Logo da JAT sem o "GRUPO" (17/11/2026): canto da prévia da cotação. */
+export const LOGO_JAT_CLEAN_URL = '/brand/logo-jat-clean.png';
+
+/** Logo da JAT na prévia da cotação (azul; branca no tema escuro). Decorativa. */
+export function LogoJatPrevia({ className }: { className?: string }) {
+  return (
+    <img
+      src={LOGO_JAT_CLEAN_URL}
+      alt="JAT"
+      width={500}
+      height={230}
+      className={cn('h-7 w-auto shrink-0 select-none dark:brightness-0 dark:invert', className)}
+      draggable={false}
+    />
+  );
+}
+
 /** Clicar na logo da JAT abre o site do Grupo JAT (14/11/2026). */
 export const SITE_JAT = 'https://www.grupojat.com.br/';
 

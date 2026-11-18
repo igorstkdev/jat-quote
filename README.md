@@ -282,7 +282,21 @@ Checklist de testes manuais para os operadores: [CHECKLIST.md](CHECKLIST.md).
   tirar uma cotação de Aprovada é só do Admin. Cada mudança fica registrada.
 - Os links de rastreio (Gollog, Azul Cargo) são editados em Administração → Configurações.
 
+## Termos e condições
+
+- **Configurações → Condições Spot**: um conjunto para o Rodoviário e outro para o Aéreo.
+  **Configurações → Condições FTL**: um para cada veículo (Utilitário, VAN e 1.5T).
+- Cada conjunto pode ser escrito em **tópicos** (Enter cria o próximo, setas reordenam) ou em
+  **texto livre**.
+- Os termos aparecem na prévia, nos PDFs, no Copiar e no e-mail, e ficam **gravados na cotação
+  ao salvar**: mudar as Configurações não altera cotações já salvas.
+
 ## Relatório e Dashboard
+
+- **Cotações de teste** (só Admin): no Relatório Spot, **Importar cotações (Excel)** carrega a
+  planilha exportada (Nº, DATA, CLIENTE, ROTA, MODAL, TOTAL, STATUS) como dados de teste, com
+  prévia. Elas aparecem com o selo "teste" e saem todas de uma vez em **Remover dados de teste**
+  (digite REMOVER DADOS DE TESTE). As cotações reais não são tocadas.
 
 - **Relatório Spot** (`/relatorios`): filtros combináveis (nº da cotação, cliente, origem ou
   destino; período; status; modal) guardados no endereço da página, então o link pode ser

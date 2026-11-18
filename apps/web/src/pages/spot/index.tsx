@@ -1,4 +1,11 @@
-import { formatarCidade, formatPercentual, linkEmailCotacao, textoCotacao } from '@jat/core';
+import {
+  formatarCidade,
+  formatPercentual,
+  linkEmailCotacao,
+  textoCondicoes,
+  textoCotacao,
+  type Condicoes,
+} from '@jat/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ChevronDown,
@@ -123,6 +130,9 @@ export default function SpotPage() {
   const alterado = cotacao ? !formVazioOuIgual(form, base) : false;
   const somenteLeitura = cotacao?.status === 'APROVADA';
   const vazio = formVazioOuIgual(form, FORM_VAZIO);
+  // Termos do modal: os gravados na cotação salva (sem alterações) ou os atuais das Configurações.
+  const termos: Condicoes | null =
+    (cotacao && !alterado ? cotacao.terms : null) ?? cfg.data?.condicoesSpot[form.modal] ?? null;
 
   const erroDe = (id: string) => {
     if (erroServidor && idDoCampo(erroServidor.campo) === id) return erroServidor.message;
@@ -206,6 +216,7 @@ export default function SpotPage() {
       total: resultado.total,
       adValoremPct: resultado.adValorem.pct,
       observacoes: form.obs,
+      termos: textoCondicoes(termos),
     };
   };
 
@@ -530,6 +541,7 @@ export default function SpotPage() {
             resultado={resultado}
             cotacao={cotacao}
             alterado={alterado}
+            termos={cfg.data ? termos : undefined}
           />
         </div>
       </div>

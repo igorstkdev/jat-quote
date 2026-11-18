@@ -21,6 +21,7 @@ const CARTAO_PLANO: Record<PlanoLicenca, { titulo: string; duracao: string }> = 
   TRIMESTRAL: { titulo: 'Trimestral', duracao: '3 meses' },
   SEMESTRAL: { titulo: 'Semestral', duracao: '6 meses' },
   ANUAL: { titulo: 'Anual', duracao: '1 ano' },
+  VITALICIO: { titulo: 'Vitalício', duracao: 'sem vencimento' },
 };
 
 /** Escolha do plano em cartões (grupo de rádio acessível). */
@@ -32,7 +33,7 @@ export function SeletorPlano({
   onChange: (p: PlanoLicenca) => void;
 }) {
   return (
-    <div role="radiogroup" aria-label="Plano" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div role="radiogroup" aria-label="Plano" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
       {PLANOS_LICENCA.map((p) => {
         const marcado = valor === p;
         return (
@@ -129,9 +130,11 @@ export function FormAtivacao({
           setSenhaMestre('');
           setSenha('');
           toast.success(
-            estado.vencimento
-              ? `Sistema ativo até ${dataIsoParaBR(estado.vencimento)}.`
-              : 'Sistema ativado.',
+            estado.plano === 'VITALICIO'
+              ? 'Sistema ativado: plano Vitalício, sem vencimento.'
+              : estado.vencimento
+                ? `Sistema ativo até ${dataIsoParaBR(estado.vencimento)}.`
+                : 'Sistema ativado.',
           );
           // Recarrega o que estava bloqueado.
           void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] !== CHAVE_LICENCA[0] });

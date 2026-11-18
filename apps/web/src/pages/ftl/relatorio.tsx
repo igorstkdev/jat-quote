@@ -1,4 +1,11 @@
-import { formatBRL, formatNumero, textoCotacaoFtl, type DadosTextoFtl } from '@jat/core';
+import {
+  formatBRL,
+  formatNumero,
+  textoCondicoes,
+  textoCotacaoFtl,
+  type DadosTextoFtl,
+} from '@jat/core';
+import { termosDaCotacao } from '@/components/termos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CircleDot, Copy, FileDown, FileText, MoreHorizontal, Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -86,7 +93,7 @@ export function RelatorioFtl() {
       total: q.total,
       adValoremPct: q.adValoremPct,
       data: new Date(q.createdAt),
-      condicoes: cfg.data?.condicoesFtl ?? '',
+      condicoes: textoCondicoes(termosDaCotacao(q, cfg.data)),
       observacoes: q.notes,
     };
     try {

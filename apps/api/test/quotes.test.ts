@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { dadosPdf } from '../src/lib/pdf.js';
 import { htmlCotacaoCliente, htmlCotacaoOperacao } from '../src/lib/pdf-templates.js';
+import { termosGravados } from '../src/lib/quotes.js';
 import {
   criarAppTeste,
   criarDbTeste,
@@ -206,15 +207,45 @@ describe('cotação Spot: editar, bloqueio da Aprovada e duplicar', () => {
   });
 });
 
+describe('termos e condições (17/11/2026)', () => {
+  it('ficam gravados ao salvar e não mudam quando o Admin edita as Configurações', async () => {
+    const salva = (await salvar(oper, aereo())).json().quote;
+    expect(salva.terms.formato).toBe('TOPICOS');
+    expect(salva.terms.topicos).toContain('ICMS e seguro a incluir.');
+
+    await req(app, admin, {
+      method: 'PUT',
+      url: '/api/settings/spot-conditions',
+      payload: {
+        conditions: {
+          RODOVIARIO: { formato: 'TEXTO', topicos: [], texto: 'Termo rodoviário novo.' },
+          AEREO: { formato: 'TOPICOS', topicos: ['Termo aéreo novo.'], texto: '' },
+        },
+      },
+    });
+    const lida = (await req(app, oper, { method: 'GET', url: `/api/quotes/${salva.id}` })).json()
+      .quote;
+    expect(lida.terms.topicos).toContain('ICMS e seguro a incluir.');
+
+    // Duplicar como nova = nova cotação, com os termos atuais.
+    const dup = (
+      await req(app, oper, { method: 'POST', url: `/api/quotes/${salva.id}/duplicate` })
+    ).json().quote;
+    expect(dup.terms.topicos).toEqual(['Termo aéreo novo.']);
+  });
+});
+
 describe('PDF', () => {
   it('visão do cliente: sem custos internos, com validade de 30 dias', async () => {
     await salvar(oper, aereo());
     const q = await db.quote.findFirstOrThrow({ include: { createdBy: true } });
-    const html = htmlCotacaoCliente(dadosPdf(q, 'Fulano <b>'));
+    const html = htmlCotacaoCliente(dadosPdf(q, 'Fulano <b>', termosGravados(q)));
     expect(html).toContain('JQ-000001');
     expect(html).toContain('R$ 1.935,00');
     expect(html).toContain('Feira de Santana, BA');
     expect(html).toContain('Validade da cotação: 30 dias');
+    expect(html).toContain('Termos e condições');
+    expect(html).toContain('ICMS e seguro a incluir.');
     expect(html).toContain(
       'Ad valorem de 0,47% sobre o valor da nota fiscal, cobrado adicionalmente.',
     );
@@ -226,7 +257,7 @@ describe('PDF', () => {
   it('visão da operação: detalhamento igual ao app atual', async () => {
     await salvar(oper, aereo());
     const q = await db.quote.findFirstOrThrow({ include: { createdBy: true } });
-    const html = htmlCotacaoOperacao(dadosPdf(q, 'X'));
+    const html = htmlCotacaoOperacao(dadosPdf(q, 'X', termosGravados(q)));
     for (const t of [
       'Transporte aéreo',
       'Custo base',

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { formatarCidade, formatarNumeroCotacao } from '@jat/core';
+import { formatarCidade, formatarNumeroCotacao, type Condicoes } from '@jat/core';
 import { chromium, type Browser } from 'playwright-core';
 import type { Quote } from '../generated/prisma/client.js';
 import {
@@ -55,7 +55,7 @@ type QuoteParaPdf = Quote & {
   ftlRate?: { region: string } | null;
 };
 
-export function dadosPdf(q: QuoteParaPdf, geradoPor: string): DadosPdf {
+export function dadosPdf(q: QuoteParaPdf, geradoPor: string, termos: Condicoes | null): DadosPdf {
   return {
     code: formatarNumeroCotacao(q.number),
     modal: q.modal,
@@ -68,12 +68,17 @@ export function dadosPdf(q: QuoteParaPdf, geradoPor: string): DadosPdf {
     geradoPor,
     geradoEm: new Date(),
     observacoes: q.notes,
+    termos,
     resultado: resultadoGravado(q),
     logoDataUrl: logoDataUrl(),
   };
 }
 
-export function dadosPdfFtl(q: QuoteParaPdf, geradoPor: string, condicoes: string): DadosPdfFtl {
+export function dadosPdfFtl(
+  q: QuoteParaPdf,
+  geradoPor: string,
+  condicoes: Condicoes | null,
+): DadosPdfFtl {
   return {
     code: formatarNumeroCotacao(q.number),
     uf: q.destUf ?? '—',
@@ -97,10 +102,10 @@ export async function gerarPdfCotacao(
   q: QuoteParaPdf,
   visao: 'cliente' | 'operacao',
   geradoPor: string,
-  condicoesFtl = '',
+  /** Termos gravados na cotação (ou os atuais, nas cotações antigas). */
+  termos: Condicoes | null = null,
 ): Promise<Buffer> {
-  if (q.modal === 'FTL')
-    return htmlParaPdf(htmlCotacaoFtl(dadosPdfFtl(q, geradoPor, condicoesFtl)));
-  const d = dadosPdf(q, geradoPor);
+  if (q.modal === 'FTL') return htmlParaPdf(htmlCotacaoFtl(dadosPdfFtl(q, geradoPor, termos)));
+  const d = dadosPdf(q, geradoPor, termos);
   return htmlParaPdf(visao === 'operacao' ? htmlCotacaoOperacao(d) : htmlCotacaoCliente(d));
 }

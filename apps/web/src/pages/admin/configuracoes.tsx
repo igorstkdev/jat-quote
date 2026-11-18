@@ -31,9 +31,10 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { api, ApiError, type Configuracoes, type LinkRastreio, type LinkUtil } from '@/lib/api';
 import { CHAVE_LINKS } from '@/lib/links';
+import { ROTULO_VEICULO, VEICULOS_FTL } from '@jat/core';
+import { CondicoesPorItem } from '@/components/editor-condicoes';
 
 const CHAVE_CONFIG = ['settings'] as const;
 const CHAVE_LINKS_ADMIN = ['links', 'admin'] as const;
@@ -55,6 +56,7 @@ export default function ConfiguracoesPage() {
           <TabsTrigger value="links">Links úteis</TabsTrigger>
           <TabsTrigger value="advalorem">Ad valorem</TabsTrigger>
           <TabsTrigger value="ftl">Condições FTL</TabsTrigger>
+          <TabsTrigger value="spot">Condições Spot</TabsTrigger>
           <TabsTrigger value="rastreio">Links de rastreio</TabsTrigger>
           <TabsTrigger value="licenca">Plano de vigência</TabsTrigger>
         </TabsList>
@@ -66,6 +68,9 @@ export default function ConfiguracoesPage() {
         </TabsContent>
         <TabsContent value="ftl" className="mt-4">
           <CondicoesFtl />
+        </TabsContent>
+        <TabsContent value="spot" className="mt-4">
+          <CondicoesSpot />
         </TabsContent>
         <TabsContent value="rastreio" className="mt-4">
           <LinksRastreio />
@@ -401,62 +406,40 @@ function AdValorem() {
   );
 }
 
-// ── Condições comerciais do FTL ──
+// ── Condições comerciais do FTL (uma por veículo) e Spot (uma por modal) — 17/11/2026 ──
 
 function CondicoesFtl() {
-  const qc = useQueryClient();
   const cfg = useConfiguracoes();
-  const [rascunho, setRascunho] = useState<string | null>(null);
-  const texto = rascunho ?? cfg.data?.condicoesFtl ?? '';
-  const setTexto = (v: string) => setRascunho(v);
-  const salvar = useMutation({
-    mutationFn: () => api.put('/api/settings/ftl-conditions', { text: texto }),
-    onSuccess: () => {
-      setRascunho(null);
-      toast.success('Condições comerciais do FTL salvas.');
-      void qc.invalidateQueries({ queryKey: CHAVE_CONFIG });
-    },
-  });
-  const mudou = cfg.data ? texto !== cfg.data.condicoesFtl : false;
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Condições comerciais do FTL</CardTitle>
-        <CardDescription>
-          Aparecem no resultado da calculadora FTL, no PDF, no texto copiado e no e-mail.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        {cfg.isPending ? (
-          <Skeleton className="h-48 w-full" />
-        ) : (
-          <>
-            <FormError mensagem={salvar.error?.message} />
-            <Textarea
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              rows={10}
-              aria-label="Texto das condições comerciais"
-              className="text-sm leading-relaxed"
-            />
-            <div className="flex items-center gap-3">
-              <Button onClick={() => salvar.mutate()} disabled={salvar.isPending || !mudou}>
-                {salvar.isPending && <Loader2 className="animate-spin" />}
-                Salvar texto
-              </Button>
-              {mudou && (
-                <Button variant="ghost" onClick={() => setRascunho(null)}>
-                  Descartar alterações
-                </Button>
-              )}
-              <span className="text-muted-foreground ml-auto text-xs tabular">
-                {texto.length} / 5000
-              </span>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <CondicoesPorItem
+      titulo="Condições comerciais do FTL"
+      descricao="Uma para cada veículo. Aparecem no resultado da calculadora FTL, no PDF, no texto copiado e no e-mail, e ficam gravadas em cada cotação ao salvar."
+      itens={VEICULOS_FTL.map((v) => ({ chave: v, rotulo: ROTULO_VEICULO[v] }))}
+      valores={cfg.data?.condicoesFtl}
+      carregando={cfg.isPending}
+      endpoint="/api/settings/ftl-conditions"
+      mensagemSalvo="Condições comerciais do FTL salvas."
+      chaveConfig={CHAVE_CONFIG}
+    />
+  );
+}
+
+function CondicoesSpot() {
+  const cfg = useConfiguracoes();
+  return (
+    <CondicoesPorItem
+      titulo="Termos e condições do Frete Spot"
+      descricao="Um conjunto para cada modal. Aparecem na prévia (abaixo do Total do Frete), nos PDFs, no texto copiado e no e-mail, e ficam gravados em cada cotação ao salvar."
+      itens={[
+        { chave: 'RODOVIARIO' as const, rotulo: 'Rodoviário' },
+        { chave: 'AEREO' as const, rotulo: 'Aéreo' },
+      ]}
+      valores={cfg.data?.condicoesSpot}
+      carregando={cfg.isPending}
+      endpoint="/api/settings/spot-conditions"
+      mensagemSalvo="Termos e condições do Frete Spot salvos."
+      chaveConfig={CHAVE_CONFIG}
+    />
   );
 }
 

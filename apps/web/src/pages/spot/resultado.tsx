@@ -1,9 +1,18 @@
-import { formatBRL, formatarCidade, formatPercentual, type ResultadoSpot } from '@jat/core';
+import {
+  formatBRL,
+  formatarCidade,
+  formatPercentual,
+  type Condicoes,
+  type ResultadoSpot,
+} from '@jat/core';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Calculator, ChevronDown, Percent, Plane, Truck, User } from 'lucide-react';
 import { useState } from 'react';
+import { LogoJatPrevia } from '@/components/logo';
 import { StatusBadge } from '@/components/status-badge';
+import { BlocoTermos } from '@/components/termos';
 import type { Cotacao } from '@/lib/api';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { FormSpot } from './estado';
 
@@ -12,12 +21,16 @@ export function PainelResultado({
   resultado,
   cotacao,
   alterado,
+  termos,
 }: {
   form: FormSpot;
   resultado: ResultadoSpot | null;
   cotacao: Cotacao | null;
   alterado: boolean;
+  /** Termos do modal (undefined = carregando). */
+  termos: Condicoes | null | undefined;
 }) {
+  const obs = form.obs.trim();
   const [detalhe, setDetalhe] = useState(false);
   const temValor = !!resultado && (resultado.somaCustos.gt(0) || resultado.pedagio.gt(0));
   const IconeModal = form.modal === 'AEREO' ? Plane : Truck;
@@ -44,7 +57,7 @@ export function PainelResultado({
               </div>
             </div>
           </div>
-          {cotacao && <StatusBadge status={cotacao.status} />}
+          <LogoJatPrevia />
         </div>
         <div className="mt-4 grid gap-1.5 text-sm">
           <div className="flex items-center gap-2">
@@ -73,6 +86,7 @@ export function PainelResultado({
                 Ad valorem {formatPercentual(resultado.adValorem.pct)}
               </span>
             )}
+            {cotacao && <StatusBadge status={cotacao.status} />}
           </div>
         </div>
       </div>
@@ -184,6 +198,30 @@ export function PainelResultado({
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Termos e condições do modal e observações: letra menor, abaixo dos valores. */}
+      {(termos !== null || obs) && (
+        <div className="grid gap-4 border-t px-6 py-5">
+          {termos === undefined ? (
+            <Skeleton className="h-20 w-full" />
+          ) : (
+            <BlocoTermos condicoes={termos} />
+          )}
+          {obs && (
+            <div
+              className="border-nota-borda bg-nota rounded-lg border px-3 py-2.5"
+              data-testid="previa-observacoes"
+            >
+              <div className="mb-0.5 text-nota-texto text-[11px] font-semibold tracking-wider uppercase">
+                Observações
+              </div>
+              <p className="text-foreground/80 text-xs leading-relaxed whitespace-pre-wrap">
+                {obs}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -44,6 +44,8 @@ export interface DadosTextoCotacao {
   adValoremPct: DecimalInput;
   observacoes?: string | null;
   validadeDias?: number;
+  /** Termos e condições do modal, já em texto (ver textoCondicoes). */
+  termos?: string | null;
 }
 
 /**
@@ -72,6 +74,8 @@ export function textoCotacao(d: DadosTextoCotacao, opcoes: { whatsapp?: boolean 
     `• Ad valorem de ${formatPercentual(d.adValoremPct)} sobre o valor da nota fiscal, cobrado adicionalmente.`,
     `• Validade: ${dias} dias (até ${formatarDataBR(dataValidade(d.data, dias))}).`,
   ];
+  const termos = d.termos?.trim();
+  if (termos) linhas.push('', b('Termos e condições:'), termos);
   const obs = d.observacoes?.trim();
   if (obs) linhas.push('', `Observações: ${obs}`);
   return linhas.join('\n');
@@ -103,7 +107,7 @@ export interface DadosTextoFtl {
   total: DecimalInput;
   adValoremPct: DecimalInput;
   data: Date;
-  /** Condições comerciais do FTL (texto do Admin). */
+  /** Condições comerciais do FTL do veículo, já em texto (ver textoCondicoes). */
   condicoes: string;
   observacoes?: string | null;
 }

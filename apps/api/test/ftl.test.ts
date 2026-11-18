@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { CABECALHO_CSV_FTL } from '../src/lib/ftl.js';
 import { dadosPdfFtl } from '../src/lib/pdf.js';
+import { termosGravados } from '../src/lib/quotes.js';
 import { htmlCotacaoFtl } from '../src/lib/pdf-templates.js';
 import {
   criarAppTeste,
@@ -244,12 +245,12 @@ describe('FTL: cotações', () => {
       await cotar(oper, { uf: 'SP', locality: 'CAPITAL', vehicle: 'VAN', distanceKm: '300' })
     ).json().quote;
     const q = await db.quote.findUniqueOrThrow({ where: { id }, include: { ftlRate: true } });
-    const html = htmlCotacaoFtl(dadosPdfFtl(q, 'Fulano', 'PRAZO DE VALIDADE 15 DIAS.'));
+    const html = htmlCotacaoFtl(dadosPdfFtl(q, 'Fulano', termosGravados(q)));
     expect(html).toContain('Cotação FTL Fiat');
     expect(html).toContain('SP — Capital (Sudeste)');
     expect(html).toContain('R$ 1.080,00');
     expect(html).toContain('R$ 3,60');
-    expect(html).toContain('PRAZO DE VALIDADE 15 DIAS.');
+    expect(html).toContain('PRAZO DE VALIDADE 15 DIAS.'); // condições da VAN gravadas na cotação
     expect(html).not.toContain('Cliente');
   });
 });

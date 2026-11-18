@@ -3,13 +3,15 @@ import {
   encontrarMunicipio,
   formatarCidade,
   formatarNumeroCotacao,
+  lerCondicoes,
+  type Condicoes,
   type ResultadoSpot,
 } from '@jat/core';
 import { z } from 'zod';
 import type { Db } from '../db.js';
 import type { Prisma, Quote } from '../generated/prisma/client.js';
 import { requisicaoInvalida } from './errors.js';
-import { lerAdValoremPadrao } from './settings.js';
+import { lerAdValoremPadrao, lerCondicoesFtl, lerCondicoesSpot } from './settings.js';
 
 /** Número/texto vindo do formulário: aceita "1.234,56", "1234.56", número ou vazio. */
 const valor = z.union([z.string().max(30), z.number(), z.null()]).optional();
@@ -86,6 +88,8 @@ export async function prepararSpot(db: Db, e: EntradaSpotApi, clienteAtual?: str
     subtotal: r.subtotal.toFixed(2),
     total: r.total.toFixed(2),
     notes: e.notes ? e.notes : null,
+    // Termos do modal copiados na hora de salvar (não mudam depois — 17/11/2026).
+    terms: (await lerCondicoesSpot(db))[e.modal] as unknown as Prisma.InputJsonValue,
   } satisfies Partial<Prisma.QuoteUncheckedCreateInput>;
 
   return { data, resultado: r };
@@ -107,6 +111,37 @@ type QuoteComRelacoes = Quote & {
 };
 
 const s = (d: { toString(): string } | null | undefined) => (d == null ? null : d.toString());
+
+/** Termos gravados na cotação (null em cotações anteriores a 17/11/2026). */
+export function termosGravados(q: Pick<Quote, 'terms'>): Condicoes | null {
+  return q.terms == null ? null : lerCondicoes(q.terms);
+}
+
+/**
+ * Termos para mostrar/imprimir: os gravados; nas cotações antigas (sem termos gravados), os
+ * atuais das Configurações para o modal (Spot) ou o veículo (FTL).
+ */
+export async function termosDaCotacao(
+  db: Db,
+  q: Pick<Quote, 'terms' | 'modal' | 'vehicle'>,
+): Promise<Condicoes> {
+  const gravados = termosGravados(q);
+  if (gravados) return gravados;
+  if (q.modal === 'FTL') return (await lerCondicoesFtl(db))[q.vehicle ?? 'VAN'];
+  return (await lerCondicoesSpot(db))[q.modal];
+}
+
+/** Termos atuais das Configurações para uma nova cotação (ex.: "Duplicar como nova"). */
+export async function termosAtuais(
+  db: Db,
+  q: Pick<Quote, 'modal' | 'vehicle'>,
+): Promise<Prisma.InputJsonValue> {
+  const c =
+    q.modal === 'FTL'
+      ? (await lerCondicoesFtl(db))[q.vehicle ?? 'VAN']
+      : (await lerCondicoesSpot(db))[q.modal];
+  return c as unknown as Prisma.InputJsonValue;
+}
 
 /** Formato da cotação nas respostas da API (Decimal → string). */
 export function quoteDto(q: QuoteComRelacoes) {
@@ -141,6 +176,8 @@ export function quoteDto(q: QuoteComRelacoes) {
     subtotal: s(q.subtotal),
     total: s(q.total),
     notes: q.notes,
+    terms: termosGravados(q),
+    isTestData: q.isTestData,
     ftl:
       q.modal === 'FTL'
         ? {

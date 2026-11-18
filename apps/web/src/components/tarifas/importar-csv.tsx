@@ -36,7 +36,22 @@ export async function lerArquivoTexto(f: File): Promise<string> {
   }
 }
 
-/** Importação de CSV em duas etapas: prévia (validação por linha) → confirmar. */
+/** Lê o arquivo binário (ex.: .xlsx) em base64. */
+async function lerArquivoBase64(f: File): Promise<string> {
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+type TipoArquivo = 'csv' | 'xlsx';
+
+/**
+ * Importação em duas etapas: prévia (validação por linha) → confirmar.
+ * `tipo="xlsx"`: planilha do Excel, enviada como { file } em base64 (cotações de teste).
+ */
 export function ImportarCsvDialog({
   aberto,
   onAbertoChange,
@@ -44,6 +59,8 @@ export function ImportarCsvDialog({
   endpoint,
   colunas,
   onImportado,
+  tipo = 'csv',
+  descricao,
 }: {
   aberto: boolean;
   onAbertoChange: (v: boolean) => void;
@@ -51,6 +68,8 @@ export function ImportarCsvDialog({
   endpoint: string;
   colunas: string;
   onImportado: () => void;
+  tipo?: TipoArquivo;
+  descricao?: string;
 }) {
   return (
     <Dialog open={aberto} onOpenChange={onAbertoChange}>
@@ -62,6 +81,8 @@ export function ImportarCsvDialog({
             colunas={colunas}
             onFechar={() => onAbertoChange(false)}
             onImportado={onImportado}
+            tipo={tipo}
+            descricao={descricao}
           />
         )}
       </DialogContent>
@@ -75,21 +96,27 @@ function Conteudo({
   colunas,
   onFechar,
   onImportado,
+  tipo,
+  descricao,
 }: {
   titulo: string;
   endpoint: string;
   colunas: string;
   onFechar: () => void;
   onImportado: () => void;
+  tipo: TipoArquivo;
+  descricao?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [arquivo, setArquivo] = useState<{ nome: string; csv: string } | null>(null);
+  const corpo = (conteudo: string) => (tipo === 'xlsx' ? { file: conteudo } : { csv: conteudo });
 
   const previa = useMutation({
-    mutationFn: (csv: string) => api.post<ResultadoImportacao>(endpoint, { csv }),
+    mutationFn: (conteudo: string) => api.post<ResultadoImportacao>(endpoint, corpo(conteudo)),
   });
   const confirmar = useMutation({
-    mutationFn: () => api.post<ResultadoImportacao>(endpoint, { csv: arquivo!.csv, confirm: true }),
+    mutationFn: () =>
+      api.post<ResultadoImportacao>(endpoint, { ...corpo(arquivo!.csv), confirm: true }),
     onSuccess: (r) => {
       if (!r.applied) {
         toast.error('O arquivo mudou ou tem erros. Revise a prévia.');
@@ -105,7 +132,7 @@ function Conteudo({
 
   const escolher = async (f: File | undefined) => {
     if (!f) return;
-    const csv = await lerArquivoTexto(f);
+    const csv = tipo === 'xlsx' ? await lerArquivoBase64(f) : await lerArquivoTexto(f);
     setArquivo({ nome: f.name, csv });
     previa.mutate(csv);
   };
@@ -119,8 +146,8 @@ function Conteudo({
       <DialogHeader>
         <DialogTitle>{titulo}</DialogTitle>
         <DialogDescription>
-          Use o mesmo layout do arquivo exportado (separado por ponto e vírgula ou vírgula). Nada é
-          gravado antes da sua confirmação.
+          {descricao ??
+            'Use o mesmo layout do arquivo exportado (separado por ponto e vírgula ou vírgula). Nada é gravado antes da sua confirmação.'}
         </DialogDescription>
       </DialogHeader>
 
@@ -138,7 +165,7 @@ function Conteudo({
           {arquivo ? <FileSpreadsheet className="size-5" /> : <Upload className="size-5" />}
         </span>
         <span className="text-sm font-medium">
-          {arquivo ? arquivo.nome : 'Escolha ou arraste o arquivo .csv'}
+          {arquivo ? arquivo.nome : `Escolha ou arraste o arquivo .${tipo}`}
         </span>
         <span className="text-muted-foreground max-w-md text-xs break-words">
           Colunas: {colunas}
@@ -147,9 +174,13 @@ function Conteudo({
       <input
         ref={input}
         type="file"
-        accept=".csv,text/csv"
+        accept={
+          tipo === 'xlsx'
+            ? '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            : '.csv,text/csv'
+        }
         className="hidden"
-        aria-label="Arquivo CSV"
+        aria-label={tipo === 'xlsx' ? 'Planilha do Excel' : 'Arquivo CSV'}
         onChange={(e) => {
           void escolher(e.target.files?.[0]);
           e.target.value = '';
@@ -297,7 +328,7 @@ function baixarRelatorio(r: ResultadoImportacao, nomeArquivo: string) {
   const url = URL.createObjectURL(new Blob([bom + csv], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = `relatorio-importacao_${nomeArquivo.replace(/\.csv$/i, '')}.csv`;
+  a.download = `relatorio-importacao_${nomeArquivo.replace(/\.(csv|xlsx)$/i, '')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

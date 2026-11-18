@@ -1,3 +1,4 @@
+import type { Condicoes } from '@jat/core';
 /** Erro de API com mensagem já em português, pronta para mostrar ao usuário. */
 export class ApiError extends Error {
   constructor(
@@ -124,7 +125,10 @@ export interface LinkRastreio {
 
 export interface Configuracoes {
   adValorem: { AEREO: string; RODOVIARIO: string };
-  condicoesFtl: string;
+  /** Condições comerciais FTL por veículo (17/11/2026). */
+  condicoesFtl: Record<VeiculoFtl, Condicoes>;
+  /** Termos e condições Spot por modal (17/11/2026). */
+  condicoesSpot: Record<'RODOVIARIO' | 'AEREO', Condicoes>;
   linksRastreio: LinkRastreio[];
 }
 
@@ -168,6 +172,10 @@ export interface Cotacao {
   subtotal: string;
   total: string;
   notes: string | null;
+  /** Termos gravados ao salvar (null nas cotações anteriores a 17/11/2026). */
+  terms: Condicoes | null;
+  /** Importada como dado de teste. */
+  isTestData: boolean;
   ftl: {
     uf: string | null;
     region: string;

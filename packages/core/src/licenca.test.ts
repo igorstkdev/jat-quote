@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { calcularVencimento, diasEntre, situacaoVigencia, somarMeses } from './licenca.js';
+import {
+  calcularVencimento,
+  diasEntre,
+  situacaoVigencia,
+  somarMeses,
+  VENCIMENTO_VITALICIO,
+} from './licenca.js';
 
 /** Meio-dia em São Paulo no dia informado. */
 const em = (dia: string) => new Date(`${dia}T12:00:00-03:00`);
@@ -57,5 +63,17 @@ describe('situacaoVigencia', () => {
   it('diasEntre', () => {
     expect(diasEntre('2026-11-14', '2026-12-14')).toBe(30);
     expect(diasEntre('2026-12-14', '2026-11-14')).toBe(-30);
+  });
+});
+
+describe('plano Vitalício', () => {
+  it('não vence e não avisa', () => {
+    const v = calcularVencimento('VITALICIO', '2026-11-17', '2026-12-01');
+    expect(v).toBe(VENCIMENTO_VITALICIO);
+    expect(situacaoVigencia(v, new Date('2090-01-01T12:00:00-03:00'))).toEqual({
+      situacao: 'ATIVA',
+      diasRestantes: null,
+      aviso: false,
+    });
   });
 });

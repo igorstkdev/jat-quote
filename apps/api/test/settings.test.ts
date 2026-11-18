@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { seed } from '../src/seed.js';
+import { TOPICOS_AEREO_PADRAO } from '@jat/core';
 import { CONDICOES_FTL_PADRAO, LINKS_RASTREIO_PADRAO } from '../src/lib/settings.js';
 import {
   criarAppTeste,
@@ -31,12 +32,18 @@ beforeEach(async () => {
   oper = await login(app, 'oper');
 });
 
+const textoFtl = { formato: 'TEXTO', topicos: [], texto: CONDICOES_FTL_PADRAO };
+
 describe('configurações', () => {
   it('padrões de fábrica: ad valorem 0,47/0,15 e condições do FTL', async () => {
     const res = await req(app, oper, { method: 'GET', url: '/api/settings' });
     expect(res.json()).toEqual({
       adValorem: { AEREO: '0.47', RODOVIARIO: '0.15' },
-      condicoesFtl: CONDICOES_FTL_PADRAO,
+      condicoesFtl: { UTILITARIO: textoFtl, VAN: textoFtl, TRES_QUARTOS: textoFtl },
+      condicoesSpot: {
+        RODOVIARIO: { formato: 'TOPICOS', topicos: [], texto: '' },
+        AEREO: { formato: 'TOPICOS', topicos: [...TOPICOS_AEREO_PADRAO], texto: '' },
+      },
       linksRastreio: LINKS_RASTREIO_PADRAO,
     });
   });
@@ -91,25 +98,56 @@ describe('configurações', () => {
     );
   });
 
-  it('Admin edita as condições comerciais do FTL', async () => {
+  it('Admin edita as condições FTL por veículo (texto livre ou tópicos)', async () => {
+    const conditions = {
+      UTILITARIO: { formato: 'TEXTO', topicos: [], texto: '  Texto do utilitário.  ' },
+      VAN: { formato: 'TOPICOS', topicos: ['Primeiro.', '  ', ' Segundo. '], texto: '' },
+      TRES_QUARTOS: { formato: 'TEXTO', topicos: [], texto: '' },
+    };
     const res = await req(app, admin, {
       method: 'PUT',
       url: '/api/settings/ftl-conditions',
-      payload: { text: 'Novo texto das condições.' },
+      payload: { conditions },
     });
-    expect(res.json().condicoesFtl).toBe('Novo texto das condições.');
-    expect(
-      (await req(app, oper, { method: 'GET', url: '/api/settings' })).json().condicoesFtl,
-    ).toBe('Novo texto das condições.');
-    expect(
-      (
-        await req(app, oper, {
-          method: 'PUT',
-          url: '/api/settings/ftl-conditions',
-          payload: { text: 'xxxxxxxxxxxx' },
-        })
-      ).statusCode,
-    ).toBe(403);
+    expect(res.statusCode).toBe(200);
+    const lido = (await req(app, oper, { method: 'GET', url: '/api/settings' })).json()
+      .condicoesFtl;
+    expect(lido.UTILITARIO.texto).toBe('Texto do utilitário.');
+    expect(lido.VAN.topicos).toEqual(['Primeiro.', 'Segundo.']);
+    const negado = await req(app, oper, {
+      method: 'PUT',
+      url: '/api/settings/ftl-conditions',
+      payload: { conditions },
+    });
+    expect(negado.statusCode).toBe(403);
+    const aud = await db.auditLog.findFirst({ where: { entityId: 'condicoes_ftl_veiculos' } });
+    expect(Object.keys(aud?.details as object).sort()).toEqual([
+      'TRES_QUARTOS',
+      'UTILITARIO',
+      'VAN',
+    ]);
+  });
+
+  it('Admin edita as condições Spot por modal; formato inválido é recusado', async () => {
+    const conditions = {
+      RODOVIARIO: { formato: 'TOPICOS', topicos: ['ICMS a incluir.'], texto: '' },
+      AEREO: { formato: 'TEXTO', topicos: [], texto: 'Texto livre do aéreo.' },
+    };
+    const res = await req(app, admin, {
+      method: 'PUT',
+      url: '/api/settings/spot-conditions',
+      payload: { conditions },
+    });
+    expect(res.json().condicoesSpot).toEqual(conditions);
+    const inval = await req(app, admin, {
+      method: 'PUT',
+      url: '/api/settings/spot-conditions',
+      payload: {
+        conditions: { ...conditions, AEREO: { formato: 'HTML', topicos: [], texto: '' } },
+      },
+    });
+    expect(inval.statusCode).toBe(400);
+    expect(inval.json().message).toBe('Escolha o formato: tópicos ou texto livre.');
   });
 });
 

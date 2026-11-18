@@ -22,6 +22,7 @@ import {
   type DadosTabelaFtl,
 } from '../lib/ftl.js';
 import { INCLUIR_COTACAO, quoteDto } from '../lib/quotes.js';
+import { lerCondicoesFtl } from '../lib/settings.js';
 import { exigir } from '../plugins/auth.js';
 import { FRASE_EXCLUIR_TUDO } from './air-rates.js';
 
@@ -386,6 +387,8 @@ export function ftlRoutes(db: Db) {
             subtotal: total,
             total,
             notes: e.notes ? e.notes : null,
+            // Condições do veículo copiadas na hora de salvar (17/11/2026).
+            terms: (await lerCondicoesFtl(db))[e.vehicle] as unknown as Prisma.InputJsonValue,
             createdById: u.id,
           },
           include: INCLUIR_COTACAO,

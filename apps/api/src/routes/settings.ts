@@ -1,9 +1,23 @@
-import type { FastifyInstance } from 'fastify';
+import {
+  FORMATOS_CONDICOES,
+  MAX_TAMANHO_TEXTO,
+  MAX_TAMANHO_TOPICO,
+  MAX_TOPICOS,
+  normalizarCondicoes,
+} from '@jat/core';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Db } from '../db.js';
+import type { Prisma } from '../generated/prisma/client.js';
 import { diferencas, registrarAuditoria } from '../lib/audit.js';
 import { naoEncontrado } from '../lib/errors.js';
-import { CHAVES, lerAdValoremPadrao, lerCondicoesFtl, lerLinksRastreio } from '../lib/settings.js';
+import {
+  CHAVES,
+  lerAdValoremPadrao,
+  lerCondicoesFtl,
+  lerCondicoesSpot,
+  lerLinksRastreio,
+} from '../lib/settings.js';
 import { exigir } from '../plugins/auth.js';
 
 const pct = z
@@ -16,8 +30,34 @@ const pct = z
   .transform((v) => String(Number(v)));
 
 const adValoremSchema = z.object({ AEREO: pct, RODOVIARIO: pct });
-const condicoesSchema = z.object({
-  text: z.string().trim().min(10, 'O texto das condições está muito curto.').max(5000),
+/** Um conjunto de termos: tópicos ou texto livre (17/11/2026). Pode ficar vazio. */
+const condicoesSchema = z
+  .object({
+    formato: z.enum(FORMATOS_CONDICOES, { error: 'Escolha o formato: tópicos ou texto livre.' }),
+    topicos: z
+      .array(
+        z
+          .string()
+          .max(
+            MAX_TAMANHO_TOPICO,
+            `Cada tópico pode ter no máximo ${MAX_TAMANHO_TOPICO} caracteres.`,
+          ),
+      )
+      .max(MAX_TOPICOS, `Use no máximo ${MAX_TOPICOS} tópicos.`),
+    texto: z
+      .string()
+      .max(MAX_TAMANHO_TEXTO, `O texto pode ter no máximo ${MAX_TAMANHO_TEXTO} caracteres.`),
+  })
+  .transform(normalizarCondicoes);
+const condicoesSpotSchema = z.object({
+  conditions: z.object({ RODOVIARIO: condicoesSchema, AEREO: condicoesSchema }),
+});
+const condicoesFtlSchema = z.object({
+  conditions: z.object({
+    UTILITARIO: condicoesSchema,
+    VAN: condicoesSchema,
+    TRES_QUARTOS: condicoesSchema,
+  }),
 });
 
 const urlSchema = z
@@ -45,6 +85,35 @@ const ordemSchema = z.object({ ids: z.array(z.uuid()).max(100) });
 const idParam = z.object({ id: z.uuid('Identificador inválido.') });
 
 export function settingsRoutes(db: Db) {
+  /** Grava um conjunto de condições e registra na auditoria o que mudou (por modal/veículo). */
+  async function salvarCondicoes(
+    req: FastifyRequest,
+    chave: string,
+    antes: Record<string, unknown>,
+    depois: Record<string, unknown>,
+  ) {
+    const value = depois as Prisma.InputJsonValue;
+    await db.setting.upsert({
+      where: { key: chave },
+      create: { key: chave, value },
+      update: { value },
+    });
+    const mudancas: Record<string, { de: unknown; para: unknown }> = {};
+    for (const k of Object.keys(depois)) {
+      if (JSON.stringify(antes[k]) !== JSON.stringify(depois[k])) {
+        mudancas[k] = { de: antes[k], para: depois[k] };
+      }
+    }
+    if (Object.keys(mudancas).length > 0) {
+      await registrarAuditoria(db, req, {
+        action: 'EDITAR',
+        entity: 'configuracao',
+        entityId: chave,
+        details: mudancas,
+      });
+    }
+  }
+
   return async (app: FastifyInstance) => {
     const logado = { preHandler: exigir() };
     const admin = { preHandler: exigir({ admin: true }) };
@@ -53,6 +122,7 @@ export function settingsRoutes(db: Db) {
     app.get('/api/settings', logado, async () => ({
       adValorem: await lerAdValoremPadrao(db),
       condicoesFtl: await lerCondicoesFtl(db),
+      condicoesSpot: await lerCondicoesSpot(db),
       linksRastreio: await lerLinksRastreio(db),
     }));
 
@@ -77,22 +147,17 @@ export function settingsRoutes(db: Db) {
     });
 
     app.put('/api/settings/ftl-conditions', admin, async (req) => {
-      const { text } = condicoesSchema.parse(req.body);
+      const { conditions } = condicoesFtlSchema.parse(req.body);
       const antes = await lerCondicoesFtl(db);
-      await db.setting.upsert({
-        where: { key: CHAVES.condicoesFtl },
-        create: { key: CHAVES.condicoesFtl, value: text },
-        update: { value: text },
-      });
-      if (antes !== text) {
-        await registrarAuditoria(db, req, {
-          action: 'EDITAR',
-          entity: 'configuracao',
-          entityId: CHAVES.condicoesFtl,
-          details: { texto: { de: antes, para: text } },
-        });
-      }
-      return { condicoesFtl: text };
+      await salvarCondicoes(req, CHAVES.condicoesFtlVeiculos, antes, conditions);
+      return { condicoesFtl: conditions };
+    });
+
+    app.put('/api/settings/spot-conditions', admin, async (req) => {
+      const { conditions } = condicoesSpotSchema.parse(req.body);
+      const antes = await lerCondicoesSpot(db);
+      await salvarCondicoes(req, CHAVES.condicoesSpot, antes, conditions);
+      return { condicoesSpot: conditions };
     });
 
     app.put('/api/settings/tracking-links', admin, async (req) => {

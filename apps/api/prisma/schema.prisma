@@ -205,6 +205,10 @@ model Quote {
   subtotal     Decimal  @db.Decimal(14, 2)
   total        Decimal  @db.Decimal(14, 2)
   notes        String?
+  /// Termos e condições copiados das Configurações ao salvar (não mudam depois). Formato: Condicoes do core.
+  terms        Json?
+  /// Cotação importada como dado de teste (removível em lote pelo Admin).
+  isTestData   Boolean  @default(false) @map("is_test_data")
 
   createdById      String    @map("created_by_id") @db.Uuid
   createdBy        User      @relation("QuoteCreatedBy", fields: [createdById], references: [id])

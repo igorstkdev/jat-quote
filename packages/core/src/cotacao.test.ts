@@ -74,6 +74,16 @@ describe('texto da cotação (Copiar / e-mail) — visão do cliente', () => {
     expect(textoCotacao({ ...base, observacoes: '   ' })).not.toContain('Observações');
   });
 
+  it('termos e condições do modal entram antes das observações (17/11/2026)', () => {
+    const t = textoCotacao(
+      { ...base, termos: '• ICMS e seguro a incluir.\n• Horas paradas.', observacoes: 'Obs.' },
+      { whatsapp: true },
+    );
+    expect(t).toContain('*Termos e condições:*\n• ICMS e seguro a incluir.\n• Horas paradas.');
+    expect(t.indexOf('Termos e condições')).toBeLessThan(t.indexOf('Observações'));
+    expect(textoCotacao({ ...base, termos: '  ' })).not.toContain('Termos e condições');
+  });
+
   it('assunto e link mailto', () => {
     expect(assuntoCotacao(base)).toBe(
       'Cotação de frete JQ-000123 — São Paulo, SP → Feira de Santana, BA',

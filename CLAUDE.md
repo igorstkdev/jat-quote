@@ -1,4 +1,4 @@
-# JAT Quote — Contexto do Projeto (v1.0.0)
+# JAT Quote — Contexto do Projeto (v1.1.0)
 
 > Este arquivo é lido automaticamente pelo Claude Code em toda sessão. Ele é a fonte única de verdade do projeto.
 > Atualize-o sempre que uma regra de negócio for confirmada ou alterada.
@@ -47,6 +47,8 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - **Markup negativo não é permitido** (confirmado em 07/11/2026): erro "O markup não pode ser negativo." Custos e pedágio também não aceitam negativos; campo vazio vale 0.
 - **Ad valorem é APENAS INFORMATIVO**: não entra em nenhuma soma (total, dashboard, relatórios, Excel). Padrão **por modal: Aéreo 0,47% e Rodoviário 0,15%** (padrões configuráveis pelo Admin), editável por cotação; campo em branco = usa o padrão do modal. Aparece no PDF e no texto copiado como condição comercial: _"Ad valorem de X% sobre o valor da nota fiscal, cobrado adicionalmente."_
 - Campo opcional "Valor estimado da mercadoria": se preenchido, mostra a estimativa do ad valorem como informativa, fora do total.
+- **Termos e condições Spot** (17/11/2026): um conjunto **por modal** (Rodoviário e Aéreo), em Configurações → Condições Spot. O Admin escolhe o formato de cada um: **tópicos** (lista com •, reordenável) ou **texto livre**. Aéreo vem com os 7 tópicos de referência; Rodoviário começa vazio. Aparecem na prévia (abaixo dos valores, letra menor), nos **dois PDFs**, no Copiar e no e-mail. **Ficam gravados na cotação ao salvar** (mudar as Configurações não altera cotações já salvas; "Duplicar como nova" pega os atuais).
+- **Prévia da cotação**: logo da JAT no canto superior direito; status junto dos selos (modal, ad valorem); **Observações** num quadro discreto abaixo dos termos, atualizado enquanto digita.
 - Ações: Salvar (status inicial "Pendente"), Editar, Limpar, PDF, Copiar (texto formatado para WhatsApp/e-mail), Enviar e-mail (`mailto:` com assunto e corpo preenchidos).
 - Rascunho do formulário persistido localmente para não perder dados ao recarregar.
 - Cotações têm **número sequencial legível** (ex.: `JQ-000123`), **uma sequência única** para Spot e FTL, com o modal como campo.
@@ -95,7 +97,7 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
 - **Sem pedágio e sem markup no FTL** (confirmado em 07/11/2026 com o app atual).
 - Exemplo real: SP Capital, VAN R$ 3,60/km, 300 km → **R$ 1.080,00**; ad valorem 0,5% (da tabela), informativo.
 - **KM da rota mínimo 25 km**: abaixo disso o sistema **bloqueia** com a mensagem "KM da rota: mínimo 25 km." (confirmado em 07/11/2026).
-- **Condições comerciais do FTL**: texto padrão editável pelo Admin em uma área dedicada de configurações (não na tela da calculadora); aparece no resultado, no PDF, no "Copiar" e no e-mail.
+- **Condições comerciais do FTL**: editáveis pelo Admin em Configurações → Condições FTL, **uma por veículo** (Utilitário, VAN, 1.5T — 17/11/2026), em tópicos ou texto livre (padrão: texto livre, com o texto antigo). Aparecem no resultado, no PDF, no "Copiar" e no e-mail, e ficam gravadas na cotação ao salvar.
 - Módulo com 3 abas (referência do app atual):
   - **Calculadora**: UF destino, Tipo de localidade, Tipo de veículo, KM da rota (com link "Consulte a quilometragem no Qualp", https://qualp.com.br/#/), Observações. Resultado: Valor do Frete (destaque) com UF/localidade/veículo, Tarifa por KM, KM da rota, Ad valorem, e o bloco de **condições comerciais** (texto padrão). Ações: Salvar cotação, Limpar, Copiar, Enviar e-mail.
   - **Tabelas de Preço** (submódulo de cadastro, pré-requisito da calculadora): busca por UF ou região, filtro de status, colunas UF, Região, Tipo, VAN, Utilitário, 1,5T, Ad valorem, Status, Versão, Ações; botões Importar CSV, Exportar CSV, Nova Tabela e "Excluir Tudo" (somente Admin, confirmação forte).
@@ -160,7 +162,7 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
 - Decisão de 14/11/2026: **instalador gráfico** (`JAT-Quote-Setup-<versão>.exe`, Inno Setup, gratuito) que **instala tudo** (PostgreSQL, Node.js e Chromium embutidos, sem internet) e pergunta pasta, porta, login do Admin, pasta/horário/cópias do backup e liberação em rede pública. O script `instalar.ps1` continua como alternativa.
 ### 3.12 Plano de vigência (licença), rodapé e logo (decisões de 14/11/2026)
 
-- O sistema só funciona com um **plano de vigência ativo**: **Mensal, Trimestral (3 meses), Semestral (6 meses) ou Anual**. Sem plano (primeiro acesso), com plano vencido ou com licença alterada, **todos** veem só a tela de ativação; os dados continuam guardados e o backup segue rodando.
+- O sistema só funciona com um **plano de vigência ativo**: **Mensal, Trimestral (3 meses), Semestral (6 meses), Anual ou Vitalício** (Vitalício: sem vencimento e sem aviso; não volta para plano com prazo — 17/11/2026). Sem plano (primeiro acesso), com plano vencido ou com licença alterada, **todos** veem só a tela de ativação; os dados continuam guardados e o backup segue rodando.
 - Quem ativa/renova: um **Admin** (usuário + senha, ou já logado em Configurações → Plano de vigência) **e** a **senha mestre de ativação**, fornecida pelo responsável pelo sistema. A senha mestre **nunca é gravada** (nem no código, nem no git, nem no banco): o código guarda só a chave pública Ed25519 derivada dela (scrypt) e cada licença é **assinada**. Trocar a senha mestre = `npm run licenca:chave -w @jat/api`, atualizar `CHAVE_PUBLICA_LICENCA` e gerar novo setup.
 - Prazo em **meses de calendário**, válido até o **fim do dia** do vencimento (Brasília). Renovar antes de vencer **soma ao que falta**; plano vencido conta a partir de hoje.
 - **Aviso 15 dias antes, só para Admins** (faixa no topo com o botão Renovar).
@@ -169,6 +171,13 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
 - **Rodapé** em todas as telas: "JAT Quote © 2027 - Sistema de Cotações Logísticas | Desenvolvido por Igor Cruz".
 - **Clicar na logo da JAT** abre https://www.grupojat.com.br/ em nova aba.
 - Versão **1.0.0** (primeira com ativação).
+
+### 3.13 Cotações de teste importadas (17/11/2026)
+
+- No Relatório Spot, só Admin: **"Importar cotações (Excel)"** com a planilha exportada (colunas Nº, DATA, CLIENTE, ROTA, MODAL, TOTAL, STATUS), com prévia e erros por linha.
+- A planilha só tem o total: entra **custo = total, sem markup e sem pedágio**; mantém número JQ, data (hora de Brasília) e status; clientes que não existem são criados; cidades achadas no IBGE sem diferenciar acentos (as que não existem ficam como vieram). Número JQ já existente = erro na linha.
+- As importadas ficam marcadas como **dado de teste** (selo "teste") e saem todas de uma vez em **"Remover dados de teste"** (confirmação forte; apaga de vez só as marcadas; os clientes ficam). A numeração continua depois do maior número.
+- Versão **1.1.0**.
 
 - ⚠️ Pendente: nome do usuário Admin do servidor (o instalador pergunta) e os CSVs reais exportados do Base44.
 

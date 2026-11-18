@@ -5,8 +5,14 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { diferencas, registrarAuditoria } from '../lib/audit.js';
 import { conflito, naoEncontrado, requisicaoInvalida, semPermissao } from '../lib/errors.js';
 import { gerarPdfCotacao } from '../lib/pdf.js';
-import { INCLUIR_COTACAO, prepararSpot, quoteDto, spotSchema } from '../lib/quotes.js';
-import { lerCondicoesFtl } from '../lib/settings.js';
+import {
+  INCLUIR_COTACAO,
+  prepararSpot,
+  quoteDto,
+  spotSchema,
+  termosAtuais,
+  termosDaCotacao,
+} from '../lib/quotes.js';
 import { exigir } from '../plugins/auth.js';
 
 const idParam = z.object({ id: z.uuid('Identificador inválido.') });
@@ -244,6 +250,7 @@ export function quoteRoutes(db: Db) {
             subtotal: o.subtotal,
             total: o.total,
             notes: o.notes,
+            terms: await termosAtuais(db, o),
             ftlRateId: o.ftlRateId,
             ftlRateVersion: o.ftlRateVersion,
             ftlLocality: o.ftlLocality,
@@ -274,8 +281,7 @@ export function quoteRoutes(db: Db) {
       const { id } = idParam.parse(req.params);
       const { visao } = pdfQuery.parse(req.query);
       const q = await buscar(id);
-      const condicoes = q.modal === 'FTL' ? await lerCondicoesFtl(db) : '';
-      const pdf = await gerarPdfCotacao(q, visao, req.user!.name, condicoes);
+      const pdf = await gerarPdfCotacao(q, visao, req.user!.name, await termosDaCotacao(db, q));
       const nome = `cotacao-${quoteDto(q).code}${visao === 'operacao' && q.modal !== 'FTL' ? '-operacao' : ''}.pdf`;
       return reply
         .header('Content-Type', 'application/pdf')

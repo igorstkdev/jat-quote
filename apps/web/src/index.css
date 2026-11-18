@@ -61,6 +61,10 @@
   --destaque-mkup: oklch(0.5 0.2 280);
   --destaque-pedagio: oklch(0.55 0.17 45);
   --total-final: oklch(0.27 0.03 264);
+  /* Quadro de observações (bloco de notas discreto) */
+  --nota: oklch(0.985 0.03 95);
+  --nota-borda: oklch(0.88 0.08 90);
+  --nota-texto: oklch(0.47 0.1 70);
 }
 
 .dark {
@@ -105,6 +109,9 @@
   --destaque-mkup: oklch(0.76 0.13 280);
   --destaque-pedagio: oklch(0.78 0.14 55);
   --total-final: oklch(0.3 0.06 264);
+  --nota: oklch(0.24 0.03 85);
+  --nota-borda: oklch(0.38 0.06 85);
+  --nota-texto: oklch(0.85 0.1 88);
 }
 
 @theme inline {
@@ -144,6 +151,9 @@
   --color-destaque-mkup: var(--destaque-mkup);
   --color-destaque-pedagio: var(--destaque-pedagio);
   --color-total-final: var(--total-final);
+  --color-nota: var(--nota);
+  --color-nota-borda: var(--nota-borda);
+  --color-nota-texto: var(--nota-texto);
   --color-status-pendente: var(--status-pendente);
   --color-status-aprovada: var(--status-aprovada);
   --color-status-declinada: var(--status-declinada);
