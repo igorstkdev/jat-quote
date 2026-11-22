@@ -6,7 +6,16 @@ import {
   type ResultadoSpot,
 } from '@jat/core';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Calculator, ChevronDown, Percent, Plane, Truck, User } from 'lucide-react';
+import {
+  ArrowRight,
+  Calculator,
+  ChevronDown,
+  EyeOff,
+  Percent,
+  Plane,
+  Truck,
+  User,
+} from 'lucide-react';
 import { useState } from 'react';
 import { LogoJatPrevia } from '@/components/logo';
 import { StatusBadge } from '@/components/status-badge';
@@ -158,23 +167,29 @@ export function PainelResultado({
                       </div>
                     </div>
                   ))}
+                  {/* Valores internos (22/11/2026): só aparecem com o detalhamento aberto,
+                      para a prévia poder ir em print para o cliente. */}
+                  <Linha
+                    rotulo="MKUP total aplicado"
+                    valor={formatBRL(resultado.markupTotal)}
+                    className="bg-destaque-mkup/10 text-destaque-mkup"
+                    testid="spot-mkup"
+                  />
+                  <Linha
+                    rotulo="Subtotal com MKUP"
+                    valor={formatBRL(resultado.subtotal)}
+                    className="bg-muted/60"
+                    testid="spot-subtotal"
+                  />
+                  <p className="text-muted-foreground flex items-center justify-center gap-1.5 text-[11px]">
+                    <EyeOff className="size-3" />
+                    Uso interno: feche o detalhamento antes de enviar um print ao cliente.
+                  </p>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <Linha
-            rotulo="MKUP total aplicado"
-            valor={formatBRL(resultado.markupTotal)}
-            className="bg-destaque-mkup/10 text-destaque-mkup"
-            testid="spot-mkup"
-          />
-          <Linha
-            rotulo="Subtotal com MKUP"
-            valor={formatBRL(resultado.subtotal)}
-            className="bg-muted/60"
-            testid="spot-subtotal"
-          />
           <Linha
             rotulo="Pedágio"
             valor={formatBRL(resultado.pedagio)}

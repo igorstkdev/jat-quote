@@ -25,6 +25,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -373,7 +374,15 @@ function VolumeMensal({
   const series = modal === 'todos' ? MODAIS : [modal];
   const pontos = (dados?.monthly ?? []).map((p) => {
     const o: Record<string, string | number> = { mes: rotuloMes(p.month) };
-    for (const m of MODAIS) o[m] = medida === 'qtd' ? p[m] : Number(p[`${m}_value`]);
+    let total = 0;
+    for (const m of MODAIS) {
+      const v = medida === 'qtd' ? p[m] : Number(p[`${m}_value`]);
+      o[m] = v;
+      if (series.includes(m)) total += v;
+    }
+    // Rótulo do total do mês só no segmento mais alto que tem valor (o de cima da pilha).
+    const topo = [...series].reverse().find((m) => Number(o[m]) > 0);
+    for (const m of series) o[`rotulo_${m}`] = m === topo ? total : 0;
     return o;
   });
   const vazio = !!dados && dados.kpis.total === 0;
@@ -415,7 +424,7 @@ function VolumeMensal({
       ) : (
         <div className="min-h-64 flex-1" data-testid="grafico-mensal">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={pontos} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+            <BarChart data={pontos} margin={{ top: 22, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid vertical={false} stroke="var(--border)" />
               <XAxis
                 dataKey="mes"
@@ -447,7 +456,23 @@ function VolumeMensal({
                   maxBarSize={44}
                   animationDuration={500}
                   radius={i === series.length - 1 ? [4, 4, 0, 0] : 0}
-                />
+                >
+                  {/* Rótulo de dados (22/11/2026): total do mês em cima da pilha, desenhado
+                      pelo segmento mais alto que tem valor naquele mês. */}
+                  <LabelList
+                    dataKey={`rotulo_${m}`}
+                    position="top"
+                    offset={6}
+                    fill="var(--foreground)"
+                    fontSize={11}
+                    fontWeight={600}
+                    formatter={(v: unknown) => {
+                      const n = Number(v);
+                      if (!n) return '';
+                      return medida === 'valor' ? compacto.format(n) : inteiro(n);
+                    }}
+                  />
+                </Bar>
               ))}
             </BarChart>
           </ResponsiveContainer>

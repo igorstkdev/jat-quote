@@ -1,4 +1,4 @@
-# JAT Quote — Contexto do Projeto (v1.1.0)
+# JAT Quote — Contexto do Projeto (v1.1.1)
 
 > Este arquivo é lido automaticamente pelo Claude Code em toda sessão. Ele é a fonte única de verdade do projeto.
 > Atualize-o sempre que uma regra de negócio for confirmada ou alterada.
@@ -42,7 +42,7 @@ O **app em produção é a referência**, não a documentação antiga. Onde hou
   - `Subtotal = SomaDosCustos × (1 + Markup% / 100)`
   - `Total = Subtotal + Pedágio` (pedágio não recebe markup)
   - O markup é exibido também por componente: `Componente × (1 + Markup%/100)`.
-  - O painel de resultado mostra: Total do Frete (destaque), "MKUP Total Aplicado" (= Subtotal − SomaDosCustos), "Subtotal com MKUP", Pedágio, "Total Final" e um expansor "Detalhar Custos com MKUP" (por componente).
+  - O painel de resultado mostra: Total do Frete (destaque), Pedágio, "Total Final" e um expansor "Detalhar Custos com MKUP" com os componentes, o "MKUP Total Aplicado" (= Subtotal − SomaDosCustos) e o "Subtotal com MKUP". **Desde 22/11/2026 MKUP e Subtotal ficam só dentro do expansor (fechado por padrão)**: o operador costuma mandar um print da prévia ao cliente, e esses valores são internos.
   - Exemplos reais do app atual: Rodoviário 350 + pedágio 150, markup 70% → MKUP 245, subtotal 595, total **745,00**. Aéreo 300 + 600 + 150, pedágio 150, markup 70% → MKUP 735, subtotal 1.785, total **1.935,00**.
 - **Markup negativo não é permitido** (confirmado em 07/11/2026): erro "O markup não pode ser negativo." Custos e pedágio também não aceitam negativos; campo vazio vale 0.
 - **Ad valorem é APENAS INFORMATIVO**: não entra em nenhuma soma (total, dashboard, relatórios, Excel). Padrão **por modal: Aéreo 0,47% e Rodoviário 0,15%** (padrões configuráveis pelo Admin), editável por cotação; campo em branco = usa o padrão do modal. Aparece no PDF e no texto copiado como condição comercial: _"Ad valorem de X% sobre o valor da nota fiscal, cobrado adicionalmente."_
@@ -125,7 +125,7 @@ Pendente (azul), Aprovada (verde), Declinada (laranja: cliente recusou por preç
 
 - KPIs: total de cotações, cotações hoje, aprovadas, **Valor cotado** (todas), **Valor aprovado** e **taxa de conversão** = Aprovadas ÷ (Aprovadas + Declinadas). Recusadas e Pendentes não entram.
 - Spot e FTL juntos, com filtro por modal.
-- Gráficos: volume mensal (aéreo × rodoviário), Top 10 rotas, distribuição por status (pizza + barras de valor).
+- Gráficos: volume mensal (aéreo × rodoviário), Top 10 rotas, distribuição por status (pizza + barras de valor). No volume mensal, **rótulo com o total do mês em cima de cada barra** (quantidade ou valor compacto, conforme a medida) — 22/11/2026.
 - Filtro de período global, atalhos para os módulos, atividade recente.
 
 ### 3.8 Clientes

@@ -47,6 +47,9 @@ test('Spot rodoviário (app atual): 350 + pedágio 150, markup 70% → R$ 745,00
   await page.locator('#spot-markup').blur();
 
   await expect(page.getByTestId('spot-total')).toHaveText('R$ 745,00');
+  // MKUP e subtotal são internos: só aparecem com o detalhamento aberto (22/11/2026).
+  await expect(page.getByTestId('spot-mkup')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Detalhar custos com MKUP' }).click();
   await expect(page.getByTestId('spot-mkup')).toHaveText('R$ 245,00');
   await expect(page.getByTestId('spot-subtotal')).toHaveText('R$ 595,00');
   await expect(page.locator('#spot-custo-RODOVIARIO')).toHaveValue('350,00');
@@ -80,10 +83,10 @@ test('Spot aéreo (app atual): 300 + 600 + 150, pedágio 150, markup 70% → R$ 
   await page.locator('#spot-markup').fill('70');
   await page.locator('#spot-markup').blur();
   await expect(page.getByTestId('spot-total')).toHaveText('R$ 1.935,00');
-  await expect(page.getByTestId('spot-mkup')).toHaveText('R$ 735,00');
-  await expect(page.getByTestId('spot-subtotal')).toHaveText('R$ 1.785,00');
   await expect(page.getByText('Ad valorem de 0,47% sobre o valor da nota fiscal')).toBeVisible();
   await page.getByRole('button', { name: 'Detalhar custos com MKUP' }).click();
+  await expect(page.getByTestId('spot-mkup')).toHaveText('R$ 735,00');
+  await expect(page.getByTestId('spot-subtotal')).toHaveText('R$ 1.785,00');
   await expect(page.getByText('R$ 1.020,00')).toBeVisible();
 
   // PDF salva antes e abre em nova aba
