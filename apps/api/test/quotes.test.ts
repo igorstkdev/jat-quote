@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { dadosPdf } from '../src/lib/pdf.js';
+import { dadosPdf, verificarRecursosPdf } from '../src/lib/pdf.js';
 import { htmlCotacaoCliente, htmlCotacaoOperacao } from '../src/lib/pdf-templates.js';
 import { termosGravados } from '../src/lib/quotes.js';
 import {
@@ -287,4 +287,46 @@ describe('PDF', () => {
     expect(res.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
     expect(res.rawPayload.length).toBeGreaterThan(10_000);
   }, 30_000);
+
+  it('vários PDFs ao mesmo tempo (cliente e operação) saem todos (fila de 2)', async () => {
+    const q = (await salvar(oper, aereo())).json().quote;
+    const pedidos = ['cliente', 'operacao', 'cliente', 'operacao', 'cliente'].map((v) =>
+      req(app, oper, { method: 'GET', url: `/api/quotes/${q.id}/pdf?visao=${v}` }),
+    );
+    for (const r of await Promise.all(pedidos)) {
+      expect(r.statusCode).toBe(200);
+      expect(r.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
+    }
+  }, 60_000);
+
+  it('sem o arquivo da logo, o PDF sai com o nome da marca em vez de falhar', async () => {
+    await salvar(oper, aereo());
+    const q = await db.quote.findFirstOrThrow({ include: { createdBy: true } });
+    const html = htmlCotacaoCliente({ ...dadosPdf(q, 'X', termosGravados(q)), logoDataUrl: '' });
+    expect(html).not.toContain('<img');
+    expect(html).toContain('<div class="marca">Grupo JAT</div>');
+  });
+
+  it('erro ao abrir o PDF numa aba mostra página em português, não JSON', async () => {
+    const res = await req(app, oper, {
+      method: 'GET',
+      url: '/api/quotes/00000000-0000-4000-8000-000000000000/pdf?visao=cliente',
+      headers: { accept: 'text/html,application/xhtml+xml' },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.body).toContain('Cotação não encontrada.');
+    // Pedidos da própria tela (fetch) continuam recebendo JSON.
+    const json = await req(app, oper, {
+      method: 'GET',
+      url: '/api/quotes/00000000-0000-4000-8000-000000000000',
+    });
+    expect(json.json().message).toBe('Cotação não encontrada.');
+  });
+
+  it('recursos do PDF conferidos (logo e Chromium) e informados no /api/health', async () => {
+    expect(verificarRecursosPdf()).toEqual([]);
+    const h = (await req(app, null, { method: 'GET', url: '/api/health' })).json();
+    expect(h.pdf).toEqual({ ok: true, problemas: [] });
+  });
 });

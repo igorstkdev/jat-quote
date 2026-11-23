@@ -68,6 +68,7 @@ New-Item -ItemType Directory $app | Out-Null
 foreach ($c in @(
     'package.json', 'package-lock.json', '.env.example', 'README.md', 'CHECKLIST.md',
     'apps\api\package.json', 'apps\api\prisma.config.ts', 'apps\api\prisma', 'apps\api\dist',
+    'apps\api\assets',
     'apps\web\package.json', 'apps\web\dist',
     'packages\core\package.json', 'packages\core\dist'
   )) { Copiar $c (Join-Path $app $c) }
@@ -135,6 +136,33 @@ Get-ChildItem $app -Recurse -File -Filter '*.map' | Remove-Item -Force
 } # fim da montagem do pacote
 
 Etapa 'Conferindo o pacote'
+# Tudo que o sistema lê do disco em produção. Faltou algo = o setup NÃO é gerado
+# (22/11/2026: a logo do PDF ficou de fora e o PDF dava "erro interno" só no instalado).
+$obrigatorios = @(
+  'apps\api\dist\server.js',
+  'apps\api\dist\recuperar-acesso-cli.js',
+  'apps\api\dist\seed-cli.js',
+  'apps\api\package.json',
+  'apps\api\prisma\schema.prisma',
+  'apps\api\assets\logo-jat.png',
+  'apps\web\dist\index.html',
+  'apps\web\dist\favicon.png',
+  'apps\web\dist\brand\logo-jat.png',
+  'apps\web\dist\brand\logo-jat-clean.png',
+  'apps\web\dist\brand\logo-quote.png',
+  'node_modules\prisma\build\index.js',
+  'node_modules\playwright-core\cli.js',
+  'runtime\node\node.exe',
+  'runtime\pgsql\bin\pg_ctl.exe',
+  'scripts\configurar.ps1',
+  'scripts\executar.ps1'
+)
+$faltando = $obrigatorios | Where-Object { -not (Test-Path (Join-Path $app $_)) }
+if (-not (Get-ChildItem (Join-Path $app '.navegadores') -Recurse -Filter 'chrome-headless-shell.exe' -ErrorAction SilentlyContinue)) {
+  $faltando += '.navegadores\...\chrome-headless-shell.exe (Chromium dos PDFs)'
+}
+if ($faltando) { throw "Pacote incompleto. Faltam:`n  - $($faltando -join "`n  - ")" }
+Write-Host "  $($obrigatorios.Count + 1) arquivos obrigatórios conferidos."
 $tamanho = [math]::Round(((Get-ChildItem $app -Recurse -File | Measure-Object Length -Sum).Sum) / 1MB)
 Write-Host "  $tamanho MB em $app"
 

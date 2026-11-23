@@ -1,4 +1,4 @@
-# JAT Quote — Contexto do Projeto (v1.1.1)
+# JAT Quote — Contexto do Projeto (v1.1.2)
 
 > Este arquivo é lido automaticamente pelo Claude Code em toda sessão. Ele é a fonte única de verdade do projeto.
 > Atualize-o sempre que uma regra de negócio for confirmada ou alterada.
@@ -185,6 +185,9 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
 
 - **Dinheiro**: nunca use float. Use `decimal.js` no `packages/core` e `Decimal(14,2)` no banco. Calcule sem arredondar e arredonde **só o resultado final**, com **arredondamento comercial (meio para cima, `ROUND_HALF_UP`)**, o mesmo do Excel. O valor gravado já é o arredondado, para PDF, Excel e tela baterem.
 - **PDF**: HTML → PDF com o Chromium do Playwright no servidor (requer Chromium instalado no servidor, ~300 MB).
+  - Robustez (22/11/2026, após a logo ficar fora do setup e o PDF dar "erro interno"): logo ausente → PDF sai sem ela; Chromium que cai é reaberto e o PDF tenta de novo uma vez; no máximo 2 PDFs ao mesmo tempo; tempo limite de 30 s; falha → 503 com mensagem clara (e página em português quando aberto numa aba). `/api/health` traz `pdf.ok` e os problemas; o servidor avisa no log ao iniciar.
+  - **Todo arquivo lido do disco em produção precisa estar na lista de obrigatórios de `scripts/gerar-instalador.ps1`**: faltando um, o setup não é gerado.
+  - Erros 500 mostram o código do pedido (`req-XX`) para achar no log.
 - **Testes de referência (golden tests)** que precisam passar sempre:
   - Rodoviário: custo R$ 1.000, markup 10%, pedágio R$ 100 → subtotal **R$ 1.100,00** e total **R$ 1.200,00**; ad valorem 0,15% fora do total.
   - Cubagem 1×1×1 m, 10 kg → aéreo **166,67 kg** e rodoviário **300,00 kg**.

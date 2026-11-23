@@ -166,6 +166,13 @@ resultado de cada linha e só grava depois da confirmação. Com qualquer erro, 
 
 ## Solução de problemas
 
+- **PDF não abre**: acesse `http://<servidor>:3333/api/health` e veja o item `pdf`. Com
+  `"ok": false`, a lista `problemas` diz o que falta (logo do PDF ou Chromium). Reinstalar o
+  setup da mesma versão resolve. Sem a logo, o PDF ainda sai, com o nome "Grupo JAT" no lugar.
+  O servidor também avisa no `logs\jat-quote.log` ao iniciar.
+- **"Erro interno do servidor. ... código req-XX"**: procure esse código no `logs\jat-quote.log`
+  para ver o detalhe técnico.
+
 - **"A API não está respondendo"**: rode `servico.ps1 -Acao status`. Se não estiver no ar,
   `-Acao reiniciar` e veja `logs\jat-quote.log`.
 - **No servidor abre, mas nas outras máquinas não**: confira a regra "JAT Quote (porta 3333)" no

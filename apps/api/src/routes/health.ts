@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import type { FastifyPluginAsync } from 'fastify';
 import type { Db } from '../db.js';
+import { verificarRecursosPdf } from '../lib/pdf.js';
 
 interface DbInfo {
   version: string;
@@ -30,6 +31,11 @@ export const healthRoutes =
             serverTime: info?.now.toISOString(),
             settings,
           },
+          // Recursos do PDF (logo e Chromium): problemas aqui não derrubam o resto do sistema.
+          pdf: (() => {
+            const problemas = verificarRecursosPdf();
+            return { ok: problemas.length === 0, problemas };
+          })(),
         };
       } catch (err) {
         app.log.error({ err }, 'Falha ao consultar o banco');

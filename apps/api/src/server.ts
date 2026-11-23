@@ -2,6 +2,7 @@ import { buildApp } from './app.js';
 import { createDb } from './db.js';
 import { loadEnv } from './env.js';
 import { CHAVE_PUBLICA_LICENCA } from './lib/licenca.js';
+import { verificarRecursosPdf } from './lib/pdf.js';
 
 const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
@@ -30,3 +31,6 @@ process.on('SIGINT', () => void shutdown('SIGINT'));
 process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
 await app.listen({ host: env.HOST, port: env.PORT });
+
+// Confere logo dos PDFs e Chromium logo ao subir: o problema aparece no log antes do usuário.
+for (const p of verificarRecursosPdf()) app.log.warn(`PDF: ${p}`);

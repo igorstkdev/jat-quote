@@ -63,6 +63,7 @@ const CSS = `
   header { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 4mm;
     padding-bottom: 6mm; border-bottom: 1px solid #e2e8f0; }
   header img { height: 15mm; }
+  header .marca { font-size: 18pt; font-weight: 800; font-style: italic; color: #1F428A; }
   .titulo { text-align: right; }
   .titulo .tipo { font-size: 9pt; letter-spacing: .12em; color: #64748b; font-weight: 600; text-transform: uppercase; }
   .titulo .num { font-size: 20pt; font-weight: 700; color: #1F428A; margin-top: 1mm; font-variant-numeric: tabular-nums; }
@@ -115,7 +116,7 @@ function cabecalho(
   return `
     <div class="faixa"></div>
     <header>
-      <img src="${d.logoDataUrl}" alt="Grupo JAT" />
+      ${d.logoDataUrl ? `<img src="${d.logoDataUrl}" alt="Grupo JAT" />` : `<div class="marca">Grupo JAT</div>`}
       <div class="titulo">
         <div class="tipo">${esc(tipo)}</div>
         <div class="num">${esc(d.code)}</div>

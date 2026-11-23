@@ -75,6 +75,8 @@ export async function buildApp({
       return reply.code(400).send({ status: 'erro', message: error.message, campo: error.campo });
     }
     if (error instanceof HttpError) {
+      // Indisponibilidade (ex.: PDF) também vai para o log, com o detalhe técnico.
+      if (error.statusCode >= 500) req.log.error({ err: error }, error.message);
       return reply
         .code(error.statusCode)
         .send({ status: 'erro', message: error.message, campo: error.campo });
@@ -88,8 +90,33 @@ export async function buildApp({
     if (statusCode >= 500) req.log.error({ err: error }, 'Erro não tratado');
     return reply.code(statusCode).send({
       status: 'erro',
-      message: statusCode >= 500 ? 'Erro interno do servidor.' : 'Requisição inválida.',
+      // O código do pedido aparece para o usuário e no log: facilita achar o erro depois.
+      message:
+        statusCode >= 500
+          ? `Erro interno do servidor. Se continuar, informe o código ${req.id} ao responsável.`
+          : 'Requisição inválida.',
     });
+  });
+
+  // Erro numa página aberta direto no navegador (ex.: PDF em nova aba): em vez do JSON cru,
+  // uma página simples em português com a mensagem.
+  app.addHook('onSend', async (req, reply, payload) => {
+    if (
+      reply.statusCode < 400 ||
+      !req.url.startsWith('/api/') ||
+      !(req.headers.accept ?? '').includes('text/html') ||
+      typeof payload !== 'string'
+    ) {
+      return payload;
+    }
+    let mensagem = 'Não foi possível concluir o pedido.';
+    try {
+      mensagem = (JSON.parse(payload) as { message?: string }).message ?? mensagem;
+    } catch {
+      return payload;
+    }
+    reply.header('content-type', 'text/html; charset=utf-8');
+    return paginaDeErro(mensagem);
   });
 
   await app.register(fastifyCookie);
@@ -147,4 +174,20 @@ export async function buildApp({
   }
 
   return app;
+}
+
+const escHtml = (t: string) =>
+  t.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+  );
+
+/** Página mínima de erro (sem dependências), no padrão visual do sistema. */
+function paginaDeErro(mensagem: string): string {
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>JAT Quote</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Inter,'Segoe UI',Arial,sans-serif;background:#f7f8fb;color:#1b2235}
+@media (prefers-color-scheme:dark){body{background:#0e1220;color:#e8ebf3}.c{background:#161b2c!important;border-color:#263049!important}}
+.c{max-width:440px;margin:16px;padding:28px;border:1px solid #e2e6ef;border-radius:16px;background:#fff;border-top:3px solid #FD8B21}
+h1{font-size:18px;margin:0 0 8px}p{font-size:14px;line-height:1.5;margin:0 0 16px;opacity:.85}button{font:inherit;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid #1F428A;background:#1F428A;color:#fff;cursor:pointer}</style></head>
+<body><div class="c"><h1>Não foi possível abrir</h1><p>${escHtml(mensagem)}</p><button onclick="window.close()">Fechar esta aba</button></div></body></html>`;
 }
