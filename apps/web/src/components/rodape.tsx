@@ -1,10 +1,12 @@
+import { useEdicao } from '@/lib/edicao';
 import { cn } from '@/lib/utils';
 
 /** Texto do rodapé definido em 14/11/2026. */
-export const TEXTO_RODAPE =
-  'JAT Quote © 2027 - Sistema de Cotações Logísticas | Desenvolvido por Igor Cruz';
+export const textoRodape = (produto = 'JAT Quote') =>
+  `${produto} © 2027 - Sistema de Cotações Logísticas | Desenvolvido por Igor Cruz`;
 
 export function Rodape({ className }: { className?: string }) {
+  const { produto } = useEdicao();
   return (
     <footer
       className={cn(
@@ -12,7 +14,7 @@ export function Rodape({ className }: { className?: string }) {
         className,
       )}
     >
-      {TEXTO_RODAPE}
+      {textoRodape(produto)}
     </footer>
   );
 }

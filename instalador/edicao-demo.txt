@@ -1,0 +1,1 @@
+Edição de demonstração do Quote. Este arquivo faz o sistema funcionar no modo demo.

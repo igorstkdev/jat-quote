@@ -37,7 +37,7 @@ $pastaDados = Join-Path $raiz 'dados'
 $pgDados = Join-Path $pastaDados 'postgres'
 $arqSuper = Join-Path $pastaDados 'postgres-superusuario.txt'
 $arqEstado = Join-Path $pastaDados 'postgres.json'
-$servicoPg = 'JATQuote-PostgreSQL'
+$servicoPg = $script:ServicoPg
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
 
 function Log([string]$m, [string]$n = 'Info') { Write-Log "[$Etapa] $m" -Arquivo instalacao -Nivel $n }
@@ -162,6 +162,7 @@ try {
         Set-DotEnvValue 'PG_BIN' $pgBin
         Set-DotEnvValue 'BACKUP_DIR' $(if ($PastaBackup) { $PastaBackup } else { Join-Path $raiz 'backups' })
         Set-DotEnvValue 'BACKUP_KEEP' "$Copias"
+        if ($script:EdicaoDemo) { Set-DotEnvValue 'EDICAO' 'demo' }
         Proteger $envArq
         Log ".env criado (porta $Porta)." 'Ok'
       }
@@ -193,6 +194,13 @@ try {
       $node = Get-Node
       Push-Location (Join-Path $raiz 'apps\api')
       try {
+        if ($script:EdicaoDemo) {
+          # Demonstração: dados fictícios (só na primeira instalação; atualizar não apaga nada).
+          Executar 'Dados de demonstração' { & $node 'dist\seed-demo-cli.js' --se-vazio } | Out-Null
+          if ($SaidaAdmin) { [System.IO.File]::WriteAllText($SaidaAdmin, 'demo', (New-Object System.Text.UTF8Encoding($false))) }
+          Log 'Dados de demonstração prontos.' 'Ok'
+          return
+        }
         $saida = Executar 'Criação do Admin' { & $node 'dist\seed-cli.js' $AdminUsuario }
       } finally { Pop-Location }
       # Acentos podem chegar trocados conforme a página de código: casa com qualquer letra.

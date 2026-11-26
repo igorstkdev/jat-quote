@@ -145,6 +145,8 @@ $obrigatorios = @(
   'apps\api\package.json',
   'apps\api\prisma\schema.prisma',
   'apps\api\assets\logo-jat.png',
+  'apps\api\assets\logo-quote.png',
+  'apps\api\dist\seed-demo-cli.js',
   'apps\web\dist\index.html',
   'apps\web\dist\favicon.png',
   'apps\web\dist\brand\logo-jat.png',
@@ -166,7 +168,12 @@ Write-Host "  $($obrigatorios.Count + 1) arquivos obrigatórios conferidos."
 $tamanho = [math]::Round(((Get-ChildItem $app -Recurse -File | Measure-Object Length -Sum).Sum) / 1MB)
 Write-Host "  $tamanho MB em $app"
 
-Etapa 'Gerando o instalador'
+Etapa 'Gerando o instalador (sistema real)'
 Executar 'Inno Setup' { & $iscc "/DAppVersion=$versao" (Join-Path $raiz 'instalador\jat-quote.iss') }
-$exe = Get-ChildItem (Join-Path $raiz 'instalador\saida\*.exe') | Sort-Object LastWriteTime | Select-Object -Last 1
-Write-Host "`nPronto: $($exe.FullName) ($([math]::Round($exe.Length / 1MB)) MB)" -ForegroundColor Green
+# Edição de demonstração (25/11/2026): mesmo pacote, só o instalador muda.
+Etapa 'Gerando o instalador da demonstração'
+Executar 'Inno Setup (demo)' { & $iscc "/DAppVersion=$versao" '/DDemo' (Join-Path $raiz 'instalador\jat-quote.iss') }
+foreach ($nome in @("JAT-Quote-Setup-$versao.exe", "Quote-Demo-Setup-$versao.exe")) {
+  $exe = Get-Item (Join-Path $raiz "instalador\saida\$nome")
+  Write-Host "Pronto: $($exe.FullName) ($([math]::Round($exe.Length / 1MB)) MB)" -ForegroundColor Green
+}

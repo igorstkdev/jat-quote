@@ -3,7 +3,9 @@ import { ArrowRight, Eye, EyeOff, Loader2, Plane, ShieldCheck, Truck } from 'luc
 import { useEffect, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { FormError } from '@/components/field';
+import { AcessoDemo } from '@/components/demo';
 import { Logo } from '@/components/logo';
+import { LOGIN_DEMO, useEdicao } from '@/lib/edicao';
 import { Rodape } from '@/components/rodape';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
@@ -19,10 +21,11 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [verSenha, setVerSenha] = useState(false);
+  const { demo, produto } = useEdicao();
 
   useEffect(() => {
-    document.title = 'Entrar · JAT Quote';
-  }, []);
+    document.title = `Entrar · ${produto}`;
+  }, [produto]);
 
   const destino = (location.state as { de?: string } | null)?.de ?? '/';
   if (user) return <Navigate to={user.mustChangePassword ? '/trocar-senha' : destino} replace />;
@@ -86,7 +89,11 @@ export default function LoginPage() {
               />
             </div>
           </motion.div>
-          <p className="text-xs text-white/50">JAT Transportes e Logística · uso interno</p>
+          <p className="text-xs text-white/50">
+            {demo
+              ? 'Ambiente de demonstração · dados fictícios'
+              : 'JAT Transportes e Logística · uso interno'}
+          </p>
         </div>
       </div>
 
@@ -110,6 +117,14 @@ export default function LoginPage() {
               Use o usuário e a senha fornecidos pelo administrador.
             </p>
 
+            {demo && (
+              <AcessoDemo
+                onUsar={() => {
+                  setUsername(LOGIN_DEMO.usuario);
+                  setPassword(LOGIN_DEMO.senha);
+                }}
+              />
+            )}
             <form onSubmit={enviar} className="mt-8 grid gap-4" noValidate>
               <FormError mensagem={login.error?.message} />
               <div className="grid gap-1.5">

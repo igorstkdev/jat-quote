@@ -9,25 +9,45 @@ import {
   htmlCotacaoOperacao,
   type DadosPdf,
   type DadosPdfFtl,
+  type MarcaPdf,
 } from './pdf-templates.js';
+import { EMPRESA_DEMO } from './demo.js';
 import { HttpError } from './errors.js';
 import { resultadoGravado } from './quotes.js';
 
-/** Arquivo da logo usada no PDF (precisa ir junto no pacote do instalador). */
+/** Arquivos das logos usadas no PDF (precisam ir junto no pacote do instalador). */
 export const ARQUIVO_LOGO_PDF = new URL('../../assets/logo-jat.png', import.meta.url);
+export const ARQUIVO_LOGO_QUOTE_PDF = new URL('../../assets/logo-quote.png', import.meta.url);
+
+export interface MarcaComLogo extends MarcaPdf {
+  logo: URL;
+}
+/** Sistema real (JAT) e edição de demonstração (25/11/2026: só a marca Quote). */
+export const MARCA_JAT: MarcaComLogo = {
+  empresa: 'JAT Transportes e Logística S/A',
+  produto: 'JAT Quote',
+  logo: ARQUIVO_LOGO_PDF,
+};
+export const MARCA_DEMO: MarcaComLogo = {
+  empresa: EMPRESA_DEMO,
+  produto: 'Quote',
+  logo: ARQUIVO_LOGO_QUOTE_PDF,
+};
 
 /**
  * Logo embutida no HTML (o PDF não depende de rede). Se o arquivo faltar, o PDF sai SEM logo
  * em vez de falhar (22/11/2026: a falta dele derrubava o PDF com "erro interno").
  */
-let logo: string | undefined;
-function logoDataUrl(): string {
+const logos = new Map<string, string>();
+function logoDataUrl(arquivo: URL = ARQUIVO_LOGO_PDF): string {
+  let logo = logos.get(arquivo.href);
   if (logo === undefined) {
     try {
-      logo = `data:image/png;base64,${readFileSync(ARQUIVO_LOGO_PDF).toString('base64')}`;
+      logo = `data:image/png;base64,${readFileSync(arquivo).toString('base64')}`;
     } catch {
       logo = '';
     }
+    logos.set(arquivo.href, logo);
   }
   return logo;
 }
@@ -35,8 +55,10 @@ function logoDataUrl(): string {
 /** Problemas que impedem ou degradam o PDF (conferidos ao iniciar e no /api/health). */
 export function verificarRecursosPdf(): string[] {
   const problemas: string[] = [];
-  if (!existsSync(ARQUIVO_LOGO_PDF)) {
-    problemas.push(`Logo do PDF não encontrada (${fileURLToPath(ARQUIVO_LOGO_PDF)}).`);
+  for (const arquivo of [ARQUIVO_LOGO_PDF, ARQUIVO_LOGO_QUOTE_PDF]) {
+    if (!existsSync(arquivo)) {
+      problemas.push(`Logo do PDF não encontrada (${fileURLToPath(arquivo)}).`);
+    }
   }
   try {
     const exe = chromium.executablePath();
@@ -134,8 +156,14 @@ type QuoteParaPdf = Quote & {
   ftlRate?: { region: string } | null;
 };
 
-export function dadosPdf(q: QuoteParaPdf, geradoPor: string, termos: Condicoes | null): DadosPdf {
+export function dadosPdf(
+  q: QuoteParaPdf,
+  geradoPor: string,
+  termos: Condicoes | null,
+  marca: MarcaComLogo = MARCA_JAT,
+): DadosPdf {
   return {
+    marca: { empresa: marca.empresa, produto: marca.produto },
     code: formatarNumeroCotacao(q.number),
     modal: q.modal,
     cliente: q.clientName ?? '—',
@@ -149,7 +177,7 @@ export function dadosPdf(q: QuoteParaPdf, geradoPor: string, termos: Condicoes |
     observacoes: q.notes,
     termos,
     resultado: resultadoGravado(q),
-    logoDataUrl: logoDataUrl(),
+    logoDataUrl: logoDataUrl(marca.logo),
   };
 }
 
@@ -157,8 +185,10 @@ export function dadosPdfFtl(
   q: QuoteParaPdf,
   geradoPor: string,
   condicoes: Condicoes | null,
+  marca: MarcaComLogo = MARCA_JAT,
 ): DadosPdfFtl {
   return {
+    marca: { empresa: marca.empresa, produto: marca.produto },
     code: formatarNumeroCotacao(q.number),
     uf: q.destUf ?? '—',
     regiao: q.ftlRate?.region ?? '',
@@ -173,7 +203,7 @@ export function dadosPdfFtl(
     geradoPor,
     geradoEm: new Date(),
     observacoes: q.notes,
-    logoDataUrl: logoDataUrl(),
+    logoDataUrl: logoDataUrl(marca.logo),
   };
 }
 
@@ -183,8 +213,11 @@ export async function gerarPdfCotacao(
   geradoPor: string,
   /** Termos gravados na cotação (ou os atuais, nas cotações antigas). */
   termos: Condicoes | null = null,
+  marca: MarcaComLogo = MARCA_JAT,
 ): Promise<Buffer> {
-  if (q.modal === 'FTL') return htmlParaPdf(htmlCotacaoFtl(dadosPdfFtl(q, geradoPor, termos)));
-  const d = dadosPdf(q, geradoPor, termos);
+  if (q.modal === 'FTL') {
+    return htmlParaPdf(htmlCotacaoFtl(dadosPdfFtl(q, geradoPor, termos, marca)));
+  }
+  const d = dadosPdf(q, geradoPor, termos, marca);
   return htmlParaPdf(visao === 'operacao' ? htmlCotacaoOperacao(d) : htmlCotacaoCliente(d));
 }

@@ -35,6 +35,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, type Configuracoes, type Cotacao, type StatusCotacao } from '@/lib/api';
 import { formatData, formatDataHora } from '@/lib/format';
 import { useDebounce } from '@/lib/use-debounce';
+import { useEdicao } from '@/lib/edicao';
 import { cn } from '@/lib/utils';
 import { ROTULO_LOCALIDADE, ROTULO_VEICULO } from './comum';
 
@@ -62,6 +63,7 @@ export function RelatorioFtl() {
     queryFn: async () => (await api.get<{ quotes: Cotacao[] }>(`/api/ftl/quotes?${qs}`)).quotes,
     placeholderData: (ant) => ant,
   });
+  const { empresa } = useEdicao();
   const cfg = useQuery({
     queryKey: ['settings'],
     queryFn: () => api.get<Configuracoes>('/api/settings'),
@@ -95,6 +97,7 @@ export function RelatorioFtl() {
       data: new Date(q.createdAt),
       condicoes: textoCondicoes(termosDaCotacao(q, cfg.data)),
       observacoes: q.notes,
+      empresa,
     };
     try {
       await navigator.clipboard.writeText(textoCotacaoFtl(d, { whatsapp: true }));

@@ -48,8 +48,21 @@ function publico(e: EstadoLicenca, user: UsuarioSessao | null) {
   };
 }
 
-export function licencaRoutes(db: Db, controle: ControleLicenca) {
+export function licencaRoutes(db: Db, controle: ControleLicenca, demo = false) {
   return async (app: FastifyInstance) => {
+    if (demo) {
+      // Edição de demonstração (25/11/2026): sem licença; o navegador usa "demo" para a marca.
+      app.get('/api/licenca/estado', async () => ({
+        bloqueado: false,
+        motivo: null,
+        mensagem: null,
+        demo: true,
+      }));
+      app.post('/api/licenca/ativar', async () => {
+        throw requisicaoInvalida('A edição de demonstração não usa plano de vigência.');
+      });
+      return;
+    }
     app.get('/api/licenca/estado', async (req) => publico(await controle.estado(), req.user));
 
     app.post(

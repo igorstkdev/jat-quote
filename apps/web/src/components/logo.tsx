@@ -1,3 +1,4 @@
+import { useEdicao } from '@/lib/edicao';
 import { cn } from '@/lib/utils';
 
 /** Logo oficial do Grupo JAT (PNG recortado). */
@@ -19,6 +20,9 @@ export const LOGO_JAT_CLEAN_URL = '/brand/logo-jat-clean.png';
 
 /** Logo da JAT na prévia da cotação (azul; branca no tema escuro). Decorativa. */
 export function LogoJatPrevia({ className }: { className?: string }) {
+  const { demo } = useEdicao();
+  // Edição demo: no lugar da JAT, o Quote (25/11/2026).
+  if (demo) return <LogoQuote completa={false} branco={false} className={cn('h-9', className)} />;
   return (
     <img
       src={LOGO_JAT_CLEAN_URL}
@@ -63,6 +67,19 @@ export function Logo({
   tamanho?: keyof typeof TAMANHOS;
 }) {
   const t = TAMANHOS[tamanho];
+  const { demo, conhecida } = useEdicao();
+  // Edição demo (25/11/2026) — e enquanto a edição não é conhecida — só a marca Quote.
+  if (demo || !conhecida) {
+    return (
+      <span className={cn('inline-flex items-center', className)}>
+        {withText ? (
+          <LogoQuote completa={tamanho === 'lg'} branco={branco} className={t.quote} />
+        ) : (
+          <img src="/favicon.png" alt="Quote" className="size-8 select-none" draggable={false} />
+        )}
+      </span>
+    );
+  }
   const jat = (
     <img
       src={LOGO_URL}

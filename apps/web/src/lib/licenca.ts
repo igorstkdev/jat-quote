@@ -10,6 +10,8 @@ export interface EstadoLicenca {
   bloqueado: boolean;
   motivo: MotivoBloqueio | null;
   mensagem: string | null;
+  /** Edição de demonstração (25/11/2026): sem licença, só a marca Quote. */
+  demo?: boolean;
   // Só para Admin logado:
   plano?: PlanoLicenca;
   inicio?: string;

@@ -15,7 +15,7 @@ export default function TrocarSenhaPage() {
   const logout = useLogout();
 
   useEffect(() => {
-    document.title = 'Defina sua senha · JAT Quote';
+    document.title = 'Defina sua senha · Quote';
   }, []);
 
   if (!user) return <Navigate to="/login" replace />;
@@ -36,7 +36,7 @@ export default function TrocarSenhaPage() {
           <ChangePasswordForm
             rotuloBotao="Definir senha e entrar"
             onSucesso={() => {
-              toast.success('Senha definida. Bem-vindo ao JAT Quote!');
+              toast.success('Senha definida. Bem-vindo!');
               navigate('/', { replace: true });
             }}
           />

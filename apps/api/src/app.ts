@@ -20,7 +20,8 @@ import { quoteImportRoutes } from './routes/quotes-import.js';
 import { airRateRoutes } from './routes/air-rates.js';
 import { ftlRoutes } from './routes/ftl.js';
 import { reportRoutes } from './routes/reports.js';
-import { fecharNavegadorPdf } from './lib/pdf.js';
+import { fecharNavegadorPdf, MARCA_DEMO, MARCA_JAT } from './lib/pdf.js';
+import { demoRoutes } from './routes/demo.js';
 import { CHAVE_PUBLICA_LICENCA, criarControleLicenca } from './lib/licenca.js';
 import { licencaRoutes, rotaLiberadaSemLicenca } from './routes/licenca.js';
 
@@ -45,6 +46,11 @@ export interface AppOptions {
    * (só nos testes de integração das outras telas).
    */
   licenca?: { chavePublica: string; agora?: () => Date } | false;
+  /**
+   * Edição: 'completa' (sistema real) ou 'demo' (25/11/2026: dados fictícios, só a marca Quote,
+   * sem licença e com "Restaurar demo").
+   */
+  edicao?: 'completa' | 'demo';
 }
 
 const defaultWebDist = fileURLToPath(new URL('../../web/dist', import.meta.url));
@@ -57,8 +63,12 @@ export async function buildApp({
   cookieSecure = false,
   trustProxy = false,
   loginRateLimit = 20,
-  licenca = { chavePublica: CHAVE_PUBLICA_LICENCA },
+  licenca: licencaOpcao = { chavePublica: CHAVE_PUBLICA_LICENCA },
+  edicao = 'completa',
 }: AppOptions) {
+  const demo = edicao === 'demo';
+  // Na demo não há licença: nada bloqueia.
+  const licenca = demo ? false : licencaOpcao;
   const app = Fastify({ logger, trustProxy });
 
   app.setErrorHandler((error, req, reply) => {
@@ -145,14 +155,15 @@ export async function buildApp({
   }
 
   await app.register(healthRoutes(db));
-  await app.register(licencaRoutes(db, controleLicenca));
+  await app.register(licencaRoutes(db, controleLicenca, demo));
+  if (demo) await app.register(demoRoutes(db));
   await app.register(authRoutes(db, sessoes, loginRateLimit));
   await app.register(userRoutes(db));
   await app.register(clientRoutes(db));
   await app.register(settingsRoutes(db));
   await app.register(auditRoutes(db));
   await app.register(quoteImportRoutes(db));
-  await app.register(quoteRoutes(db));
+  await app.register(quoteRoutes(db, demo ? MARCA_DEMO : MARCA_JAT));
   await app.register(airRateRoutes(db));
   await app.register(ftlRoutes(db));
   await app.register(reportRoutes(db));

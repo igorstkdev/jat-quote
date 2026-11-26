@@ -15,7 +15,14 @@ import {
   type ResultadoSpot,
 } from '@jat/core';
 
+/** Quem assina o PDF: a JAT (sistema real) ou a empresa fictícia (edição demo). */
+export interface MarcaPdf {
+  empresa: string;
+  produto: string;
+}
+
 export interface DadosPdf {
+  marca: MarcaPdf;
   code: string;
   modal: 'AEREO' | 'RODOVIARIO' | 'FTL';
   cliente: string;
@@ -109,14 +116,14 @@ const CSS = `
 `;
 
 function cabecalho(
-  d: Pick<DadosPdf, 'logoDataUrl' | 'code' | 'criadaEm'>,
+  d: Pick<DadosPdf, 'logoDataUrl' | 'code' | 'criadaEm' | 'marca'>,
   tipo: string,
   selo?: string,
 ) {
   return `
     <div class="faixa"></div>
     <header>
-      ${d.logoDataUrl ? `<img src="${d.logoDataUrl}" alt="Grupo JAT" />` : `<div class="marca">Grupo JAT</div>`}
+      ${d.logoDataUrl ? `<img src="${d.logoDataUrl}" alt="${esc(d.marca.empresa)}" />` : `<div class="marca">${esc(d.marca.empresa)}</div>`}
       <div class="titulo">
         <div class="tipo">${esc(tipo)}</div>
         <div class="num">${esc(d.code)}</div>
@@ -126,8 +133,8 @@ function cabecalho(
     </header>`;
 }
 
-function rodape(d: DadosPdf) {
-  return `<footer><span>JAT Transportes e Logística S/A</span><span>Gerado pelo JAT Quote em ${dataHora(d.geradoEm)} por ${esc(d.geradoPor)}</span></footer>`;
+function rodape(d: Pick<DadosPdf, 'marca' | 'geradoEm' | 'geradoPor'>) {
+  return `<footer><span>${esc(d.marca.empresa)}</span><span>Gerado pelo ${esc(d.marca.produto)} em ${dataHora(d.geradoEm)} por ${esc(d.geradoPor)}</span></footer>`;
 }
 
 function infos(d: DadosPdf, extras = '') {
@@ -230,6 +237,7 @@ export function htmlCotacaoOperacao(d: DadosPdf): string {
 }
 
 export interface DadosPdfFtl {
+  marca: MarcaPdf;
   code: string;
   uf: string;
   regiao: string;
@@ -264,6 +272,6 @@ export function htmlCotacaoFtl(d: DadosPdfFtl): string {
     <div class="total"><div class="rot">Valor do frete</div><div class="val">${formatBRL(d.total)}</div></div>
     ${blocoTermos(d.condicoes, 'Condições comerciais')}
     ${d.observacoes ? `<h2>Observações</h2><div class="obs">${esc(d.observacoes)}</div>` : ''}
-    <footer><span>JAT Transportes e Logística S/A</span><span>Gerado pelo JAT Quote em ${dataHora(d.geradoEm)} por ${esc(d.geradoPor)}</span></footer>
+    ${rodape(d)}
   `);
 }

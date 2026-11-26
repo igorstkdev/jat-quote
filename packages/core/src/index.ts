@@ -60,6 +60,7 @@ export {
 export type { Uf, Municipio } from './municipios.js';
 export {
   VALIDADE_COTACAO_DIAS,
+  EMPRESA_PADRAO,
   ROTULO_MODAL,
   formatarNumeroCotacao,
   formatarDataBR,

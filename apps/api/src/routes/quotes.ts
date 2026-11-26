@@ -4,7 +4,7 @@ import type { Db } from '../db.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { diferencas, registrarAuditoria } from '../lib/audit.js';
 import { conflito, naoEncontrado, requisicaoInvalida, semPermissao } from '../lib/errors.js';
-import { gerarPdfCotacao } from '../lib/pdf.js';
+import { gerarPdfCotacao, MARCA_JAT, type MarcaComLogo } from '../lib/pdf.js';
 import {
   INCLUIR_COTACAO,
   prepararSpot,
@@ -31,7 +31,7 @@ const statusBody = z.object({
   note: z.string().trim().max(500, 'Comentário: use no máximo 500 caracteres.').nullish(),
 });
 
-export function quoteRoutes(db: Db) {
+export function quoteRoutes(db: Db, marca: MarcaComLogo = MARCA_JAT) {
   return async (app: FastifyInstance) => {
     const logado = { preHandler: exigir() };
 
@@ -281,7 +281,13 @@ export function quoteRoutes(db: Db) {
       const { id } = idParam.parse(req.params);
       const { visao } = pdfQuery.parse(req.query);
       const q = await buscar(id);
-      const pdf = await gerarPdfCotacao(q, visao, req.user!.name, await termosDaCotacao(db, q));
+      const pdf = await gerarPdfCotacao(
+        q,
+        visao,
+        req.user!.name,
+        await termosDaCotacao(db, q),
+        marca,
+      );
       const nome = `cotacao-${quoteDto(q).code}${visao === 'operacao' && q.modal !== 'FTL' ? '-operacao' : ''}.pdf`;
       return reply
         .header('Content-Type', 'application/pdf')

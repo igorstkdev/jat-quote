@@ -1,4 +1,4 @@
-# JAT Quote — Contexto do Projeto (v1.1.2)
+# JAT Quote — Contexto do Projeto (v1.2.0)
 
 > Este arquivo é lido automaticamente pelo Claude Code em toda sessão. Ele é a fonte única de verdade do projeto.
 > Atualize-o sempre que uma regra de negócio for confirmada ou alterada.
@@ -178,6 +178,17 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
 - A planilha só tem o total: entra **custo = total, sem markup e sem pedágio**; mantém número JQ, data (hora de Brasília) e status; clientes que não existem são criados; cidades achadas no IBGE sem diferenciar acentos (as que não existem ficam como vieram). Número JQ já existente = erro na linha.
 - As importadas ficam marcadas como **dado de teste** (selo "teste") e saem todas de uma vez em **"Remover dados de teste"** (confirmação forte; apaga de vez só as marcadas; os clientes ficam). A numeração continua depois do maior número.
 - Versão **1.1.0**.
+
+### 3.14 Edição de demonstração (25/11/2026)
+
+- Para apresentar o produto: **instalador próprio `Quote-Demo-Setup-<versão>.exe`**, gerado junto com o do sistema real (mesmo código; `ISCC /DDemo`). Instala ao lado do sistema real **sem conflito**: pasta `C:\Quote Demo`, porta **3334**, serviço `QuoteDemo-PostgreSQL`, tarefa e regra do Firewall "Quote Demo". O arquivo `edicao-demo.txt` na raiz liga o modo demo nos scripts; o `.env` recebe `EDICAO=demo`.
+- **Dados 100% fictícios** (`apps/api/src/lib/demo.ts`): 24 clientes, tarifas aéreas, tabelas FTL das 27 UFs e 165 cotações nos últimos 12 meses, calculadas com as regras reais. Empresa fictícia "Transportadora Exemplo".
+- **Só a marca Quote** (sem logo nem link da JAT), faixa "Ambiente de demonstração · dados fictícios", rodapé e títulos com "Quote". PDFs e texto copiado assinados pela empresa fictícia.
+- **Sem licença** (nunca bloqueia) e **sem backup**. Login pronto: **visitante / quote2026** (Admin), mostrado na tela de login.
+- **Restaurar demo** (Configurações → Demonstração, só Admin, confirmação "RESTAURAR DEMO"): apaga tudo e recria os dados fictícios.
+- **Não existe "modo visitante" no sistema real** (§3.9): a demo é outra instalação, com outro banco.
+- E2E da demo: `npm run test:e2e:demo` (porta 3398).
+- Versão **1.2.0**.
 
 - ⚠️ Pendente: nome do usuário Admin do servidor (o instalador pergunta) e os CSVs reais exportados do Base44.
 

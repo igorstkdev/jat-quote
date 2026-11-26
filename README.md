@@ -47,6 +47,15 @@ Só o servidor recebe instalação; os operadores usam o navegador. Tudo é grat
   (enterprisedb.com) e rode `powershell -ExecutionPolicy Bypass -File scripts\gerar-instalador.ps1`.
   O resultado sai em `instalador\saida`.
 
+## Demonstração do produto (Quote Demo)
+
+- O gerador produz também o **`Quote-Demo-Setup-<versão>.exe`**: uma demonstração com **dados
+  100% fictícios**, só com a marca Quote, para apresentar o produto.
+- Pode ser instalada no mesmo computador do sistema real: usa outra pasta (`C:\Quote Demo`), a
+  porta **3334** e outro banco de dados. Não tem backup nem plano de vigência.
+- Acesso: **visitante / quote2026** (aparece na tela de login).
+- Depois de uma apresentação: **Configurações → Demonstração → Restaurar demo** recria os dados.
+
 ## Instalação no servidor pelo script (alternativa)
 
 Para quem prefere usar o Node.js e o PostgreSQL já instalados no servidor.

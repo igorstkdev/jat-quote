@@ -15,6 +15,7 @@ const PORT = 3399;
 
 export default defineConfig({
   testDir: 'e2e',
+  testIgnore: 'demo/**',
   globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   reporter: [['list'], ['html', { open: 'never' }]],

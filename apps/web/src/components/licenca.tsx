@@ -210,7 +210,7 @@ const TITULO: Record<NonNullable<EstadoLicenca['motivo']>, string> = {
 
 const EXPLICACAO: Record<NonNullable<EstadoLicenca['motivo']>, string> = {
   NAO_ATIVADA:
-    'Antes do primeiro uso, um Admin precisa ativar o JAT Quote e escolher o plano de vigência.',
+    'Antes do primeiro uso, um Admin precisa ativar o sistema e escolher o plano de vigência.',
   VENCIDA:
     'O sistema fica bloqueado até um Admin renovar o plano com a senha mestre de ativação. Os dados continuam guardados.',
   INVALIDA:
@@ -223,7 +223,7 @@ const EXPLICACAO: Record<NonNullable<EstadoLicenca['motivo']>, string> = {
 export function TelaAtivacao({ estado }: { estado: EstadoLicenca }) {
   const motivo = estado.motivo ?? 'NAO_ATIVADA';
   useEffect(() => {
-    document.title = 'Sistema bloqueado · JAT Quote';
+    document.title = 'Sistema bloqueado · Quote';
   }, []);
   return (
     <div className="relative flex min-h-svh flex-col">

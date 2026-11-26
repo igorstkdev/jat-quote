@@ -55,6 +55,7 @@ import {
   type VeiculoFtl,
 } from '@/lib/api';
 import { useMe } from '@/lib/auth';
+import { useEdicao } from '@/lib/edicao';
 import { cn } from '@/lib/utils';
 import { kmBR, QUALP_URL, ROTULO_LOCALIDADE, ROTULO_VEICULO, VEICULOS } from './comum';
 
@@ -150,6 +151,7 @@ export function CalculadoraFtl() {
   const salva = cotacao ? formDaCotacao(cotacao) : null;
   const alterado = !!salva && JSON.stringify(salva) !== JSON.stringify(form);
   const vazio = JSON.stringify(form) === JSON.stringify(VAZIO);
+  const { empresa } = useEdicao();
   // Condições do veículo: as gravadas na cotação salva (sem alterações) ou as atuais.
   const condicoesAtuais: Condicoes | null =
     (cotacao && !alterado ? cotacao.terms : null) ?? cfg.data?.condicoesFtl[form.veiculo] ?? null;
@@ -212,6 +214,7 @@ export function CalculadoraFtl() {
       data: cotacao && !alterado ? new Date(cotacao.createdAt) : new Date(),
       condicoes: textoCondicoes(condicoesAtuais),
       observacoes: form.obs,
+      empresa,
     };
   };
 

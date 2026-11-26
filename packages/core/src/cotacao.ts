@@ -2,6 +2,9 @@ import type { Modal } from './ad-valorem.js';
 import { formatBRL, type DecimalInput } from './money.js';
 import { formatNumero, formatPercentual } from './numeros.js';
 
+/** Quem assina o texto da cotação no sistema real. */
+export const EMPRESA_PADRAO = 'JAT Transportes e Logística';
+
 /** Validade padrão das cotações (confirmada em 07/11/2026). */
 export const VALIDADE_COTACAO_DIAS = 30;
 
@@ -46,6 +49,8 @@ export interface DadosTextoCotacao {
   validadeDias?: number;
   /** Termos e condições do modal, já em texto (ver textoCondicoes). */
   termos?: string | null;
+  /** Empresa que assina (padrão: JAT; na edição demo, a empresa fictícia). */
+  empresa?: string;
 }
 
 /**
@@ -60,7 +65,7 @@ export function textoCotacao(d: DadosTextoCotacao, opcoes: { whatsapp?: boolean 
     : 'COTAÇÃO DE FRETE';
   const linhas = [
     b(titulo),
-    'JAT Transportes e Logística',
+    d.empresa ?? EMPRESA_PADRAO,
     '',
     `Cliente: ${d.cliente}`,
     `Origem: ${d.origem}`,
@@ -110,6 +115,8 @@ export interface DadosTextoFtl {
   /** Condições comerciais do FTL do veículo, já em texto (ver textoCondicoes). */
   condicoes: string;
   observacoes?: string | null;
+  /** Empresa que assina (padrão: JAT; na edição demo, a empresa fictícia). */
+  empresa?: string;
 }
 
 const ROTULO_LOCALIDADE = { CAPITAL: 'Capital', INTERIOR: 'Interior' } as const;
@@ -131,7 +138,7 @@ export function textoCotacaoFtl(d: DadosTextoFtl, opcoes: { whatsapp?: boolean }
     : 'COTAÇÃO FTL FIAT';
   const linhas = [
     b(titulo),
-    'JAT Transportes e Logística',
+    d.empresa ?? EMPRESA_PADRAO,
     '',
     `Destino: ${destinoFtl(d)}`,
     `Veículo: ${d.veiculo}`,

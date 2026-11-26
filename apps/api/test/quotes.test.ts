@@ -304,7 +304,7 @@ describe('PDF', () => {
     const q = await db.quote.findFirstOrThrow({ include: { createdBy: true } });
     const html = htmlCotacaoCliente({ ...dadosPdf(q, 'X', termosGravados(q)), logoDataUrl: '' });
     expect(html).not.toContain('<img');
-    expect(html).toContain('<div class="marca">Grupo JAT</div>');
+    expect(html).toContain('<div class="marca">JAT Transportes e Logística S/A</div>');
   });
 
   it('erro ao abrir o PDF numa aba mostra página em português, não JSON', async () => {

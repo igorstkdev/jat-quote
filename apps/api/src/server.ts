@@ -13,6 +13,7 @@ const app = await buildApp({
   cookieSecure: env.COOKIE_SECURE,
   trustProxy: env.TRUST_PROXY,
   loginRateLimit: env.LOGIN_RATE_LIMIT,
+  edicao: env.EDICAO,
   licenca: {
     chavePublica:
       env.NODE_ENV === 'test' && env.LICENCA_CHAVE_TESTE

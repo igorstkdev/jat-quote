@@ -31,7 +31,7 @@ $tarefa = $script:NomeTarefa
 $tarefaBackup = "$tarefa - Backup"
 $cfg = Read-DotEnv
 $porta = if ($cfg.PORT) { [int]$cfg.PORT } else { 3333 }
-$regraFirewall = "JAT Quote (porta $porta)"
+$regraFirewall = "$tarefa (porta $porta)"
 $servidor = Join-Path $raiz 'apps\api\dist\server.js'
 
 function Exigir-Administrador {
@@ -106,10 +106,13 @@ switch ($Acao) {
       -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
     Register-ScheduledTask -TaskName $tarefa -Action $acaoSistema -Principal $principal -Settings $config `
       -Trigger (New-ScheduledTaskTrigger -AtStartup) -Force `
-      -Description 'JAT Quote - Cotação de Fretes. Inicia com o Windows (scripts\executar.ps1).' | Out-Null
+      -Description "$tarefa - Cotação de Fretes. Inicia com o Windows (scripts\executar.ps1)." | Out-Null
     Write-Log "Tarefa '$tarefa' criada (inicia com o Windows)." -Arquivo servico -Nivel Ok
 
-    # Backup diário
+    # Backup diário (a demonstração não tem: os dados são fictícios)
+    if ($script:EdicaoDemo) {
+      Unregister-ScheduledTask -TaskName $tarefaBackup -Confirm:$false -ErrorAction SilentlyContinue
+    } else {
     $acaoBackup = New-ScheduledTaskAction -Execute $ps -WorkingDirectory $raiz `
       -Argument "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$raiz\scripts\backup.ps1`""
     $configBackup = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
@@ -118,9 +121,10 @@ switch ($Acao) {
       -Settings $configBackup -Trigger (New-ScheduledTaskTrigger -Daily -At $HoraBackup) -Force `
       -Description 'JAT Quote - backup diário do banco (scripts\backup.ps1).' | Out-Null
     Write-Log "Tarefa '$tarefaBackup' criada (todo dia às $HoraBackup)." -Arquivo servico -Nivel Ok
+    }
 
     # Firewall: porta liberada só para a rede local
-    Get-NetFirewallRule -DisplayName 'JAT Quote (porta *' -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+    Get-NetFirewallRule -DisplayName "$tarefa (porta *" -ErrorAction SilentlyContinue | Remove-NetFirewallRule
     # Mesmo com a rede pública liberada, só aceita máquinas da mesma sub-rede (LocalSubnet).
     $perfis = if ($PermitirRedePublica) { @('Domain', 'Private', 'Public') } else { @('Domain', 'Private') }
     New-NetFirewallRule -DisplayName $regraFirewall -Direction Inbound -Protocol TCP -LocalPort $porta `
@@ -135,7 +139,7 @@ switch ($Acao) {
     Stop-NodeDoSistema
     Unregister-ScheduledTask -TaskName $tarefa -Confirm:$false -ErrorAction SilentlyContinue
     Unregister-ScheduledTask -TaskName $tarefaBackup -Confirm:$false -ErrorAction SilentlyContinue
-    Get-NetFirewallRule -DisplayName 'JAT Quote (porta *' -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+    Get-NetFirewallRule -DisplayName "$tarefa (porta *" -ErrorAction SilentlyContinue | Remove-NetFirewallRule
     Write-Log 'Tarefas e regra do Firewall removidas. Banco, backups e arquivos continuam onde estão.' -Arquivo servico -Nivel Ok
   }
 

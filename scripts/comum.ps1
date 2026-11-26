@@ -4,7 +4,11 @@
 #>
 
 $script:Raiz = Split-Path -Parent $PSScriptRoot
-$script:NomeTarefa = 'JAT Quote'
+# Edição de demonstração (25/11/2026): o instalador da demo grava edicao-demo.txt na raiz.
+# Os nomes mudam para a demo poder ficar instalada ao lado do sistema real sem conflito.
+$script:EdicaoDemo = Test-Path (Join-Path $script:Raiz 'edicao-demo.txt')
+$script:NomeTarefa = if ($script:EdicaoDemo) { 'Quote Demo' } else { 'JAT Quote' }
+$script:ServicoPg = if ($script:EdicaoDemo) { 'QuoteDemo-PostgreSQL' } else { 'JATQuote-PostgreSQL' }
 
 function Get-Raiz { $script:Raiz }
 

@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ehAdmin, useMe } from '@/lib/auth';
+import { FaixaDemo } from '@/components/demo';
+import { useEdicao } from '@/lib/edicao';
 import { useLocalStorage } from '@/lib/use-local-storage';
 import { CommandPalette } from './command-palette';
 import { TODOS_ITENS } from './nav';
@@ -19,6 +21,7 @@ export function AppLayout() {
   const [paleta, setPaleta] = useState(false);
   const [menuMovel, setMenuMovel] = useState(false);
   const { pathname } = useLocation();
+  const { produto, demo } = useEdicao();
 
   const alternarMenu = () => setRecolhido((v) => !v);
 
@@ -44,13 +47,14 @@ export function AppLayout() {
     .find((i) => (i.to === '/' ? pathname === '/' : pathname.startsWith(i.to)));
 
   useEffect(() => {
-    document.title = atual ? `${atual.rotulo} · JAT Quote` : 'JAT Quote';
-  }, [atual]);
+    document.title = atual ? `${atual.rotulo} · ${produto}` : produto;
+  }, [atual, produto]);
 
   return (
     <div className="flex h-svh flex-col overflow-hidden">
       {/* Filete azul JAT → laranja Quote (as duas marcas juntas). */}
       <div aria-hidden className="filete-marcas h-[3px] shrink-0" />
+      {demo && <FaixaDemo />}
       <div className="flex min-h-0 flex-1">
         <div className="hidden md:block">
           <Sidebar recolhido={recolhido} onAlternar={alternarMenu} />

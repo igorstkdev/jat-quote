@@ -6,14 +6,32 @@
   #define AppVersion "1.0.0"
 #endif
 
+; Edição de DEMONSTRAÇÃO (25/11/2026): ISCC /DDemo ... gera o Quote-Demo-Setup, que instala ao lado
+; do sistema real sem conflito (outra pasta, porta, serviço e tarefa), com dados fictícios.
+#ifdef Demo
+  #define Nome "Quote Demo"
+  #define IdApp "{{3C8E9A71-5B2D-4F60-A1C4-7D9E2B6F0A13}"
+  #define Editora "Quote"
+  #define Comentario "Demonstração do Quote (dados fictícios)"
+  #define Arquivo "Quote-Demo-Setup-"
+  #define PortaPadrao "3334"
+#else
+  #define Nome "JAT Quote"
+  #define IdApp "{{6F2C8B1E-4D7A-4C3B-9E21-5A1F0C7D3B42}"
+  #define Editora "JAT Transportes e Logística"
+  #define Comentario "Cotação de Fretes (uso interno)"
+  #define Arquivo "JAT-Quote-Setup-"
+  #define PortaPadrao "3333"
+#endif
+
 [Setup]
-AppId={{6F2C8B1E-4D7A-4C3B-9E21-5A1F0C7D3B42}
-AppName=JAT Quote
+AppId={#IdApp}
+AppName={#Nome}
 AppVersion={#AppVersion}
-AppVerName=JAT Quote {#AppVersion}
-AppPublisher=JAT Transportes e Logística
-AppComments=Cotação de Fretes (uso interno)
-DefaultDirName={sd}\JAT Quote
+AppVerName={#Nome} {#AppVersion}
+AppPublisher={#Editora}
+AppComments={#Comentario}
+DefaultDirName={sd}\{#Nome}
 DisableProgramGroupPage=yes
 DisableDirPage=auto
 UsePreviousAppDir=yes
@@ -23,14 +41,14 @@ ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 WizardStyle=modern
 OutputDir=saida
-OutputBaseFilename=JAT-Quote-Setup-{#AppVersion}
+OutputBaseFilename={#Arquivo}{#AppVersion}
 ; "max" com o compressor em processo separado (64 bits): "ultra64" estoura a memória do compilador.
 Compression=lzma2/max
 SolidCompression=yes
 LZMAUseSeparateProcess=yes
 LZMANumBlockThreads=2
 CloseApplications=no
-UninstallDisplayName=JAT Quote
+UninstallDisplayName={#Nome}
 UninstallDisplayIcon={app}\jat-quote.ico
 SetupIconFile=jat-quote.ico
 SetupLogging=yes
@@ -39,30 +57,37 @@ SetupLogging=yes
 Name: "ptbr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Messages]
+#ifdef Demo
+ptbr.WelcomeLabel2=Este assistente vai instalar o [name/ver]: uma demonstração do Quote com dados 100% fictícios, para apresentar o produto.%n%nEla fica separada do sistema real (outra pasta, porta e banco de dados) e pode ser instalada no mesmo computador.%n%nNão é necessário internet nem instalar mais nada.
+#else
 ptbr.WelcomeLabel2=Este assistente vai instalar o [name/ver] neste computador, que passará a ser o servidor do sistema.%n%nTudo o que é preciso vai junto (banco de dados PostgreSQL, Node.js e o gerador de PDF); não é necessário internet nem instalar mais nada.%n%nOs operadores acessam pelo navegador, de qualquer máquina da rede.
+#endif
 ptbr.FinishedHeadingLabel=Instalação concluída
 
 [Files]
 Source: "pacote\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "jat-quote.ico"; DestDir: "{app}"; Flags: ignoreversion
+#ifdef Demo
+Source: "edicao-demo.txt"; DestDir: "{app}"; Flags: ignoreversion
+#endif
 
 [INI]
-Filename: "{app}\JAT Quote.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://localhost:{code:ValorPorta}"
-Filename: "{app}\JAT Quote.url"; Section: "InternetShortcut"; Key: "IconFile"; String: "{app}\jat-quote.ico"
-Filename: "{app}\JAT Quote.url"; Section: "InternetShortcut"; Key: "IconIndex"; String: "0"
+Filename: "{app}\{#Nome}.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://localhost:{code:ValorPorta}"
+Filename: "{app}\{#Nome}.url"; Section: "InternetShortcut"; Key: "IconFile"; String: "{app}\jat-quote.ico"
+Filename: "{app}\{#Nome}.url"; Section: "InternetShortcut"; Key: "IconIndex"; String: "0"
 
 [Icons]
-Name: "{autoprograms}\JAT Quote"; Filename: "{app}\JAT Quote.url"; IconFilename: "{app}\jat-quote.ico"; Comment: "Abrir o JAT Quote no navegador"
-Name: "{autodesktop}\JAT Quote"; Filename: "{app}\JAT Quote.url"; IconFilename: "{app}\jat-quote.ico"; Tasks: atalhodesktop
+Name: "{autoprograms}\{#Nome}"; Filename: "{app}\{#Nome}.url"; IconFilename: "{app}\jat-quote.ico"; Comment: "Abrir o {#Nome} no navegador"
+Name: "{autodesktop}\{#Nome}"; Filename: "{app}\{#Nome}.url"; IconFilename: "{app}\jat-quote.ico"; Tasks: atalhodesktop
 
 [Tasks]
 Name: "atalhodesktop"; Description: "Criar atalho na Área de Trabalho"
 
 [Run]
-Filename: "http://localhost:{code:ValorPorta}"; Description: "Abrir o JAT Quote no navegador"; Flags: postinstall shellexec nowait skipifsilent; Check: InstalacaoOk
+Filename: "http://localhost:{code:ValorPorta}"; Description: "Abrir o {#Nome} no navegador"; Flags: postinstall shellexec nowait skipifsilent; Check: InstalacaoOk
 
 [UninstallDelete]
-Type: files; Name: "{app}\JAT Quote.url"
+Type: files; Name: "{app}\{#Nome}.url"
 
 [Code]
 const
@@ -92,8 +117,18 @@ begin
   if PaginaAcesso <> nil then
     Result := Trim(PaginaAcesso.Values[0])
   else
-    Result := GetPreviousData('Porta', '3333');
-  if Result = '' then Result := '3333';
+    Result := GetPreviousData('Porta', '{#PortaPadrao}');
+  if Result = '' then Result := '{#PortaPadrao}';
+end;
+
+{ Login do administrador: na demonstração é sempre o visitante (sem pergunta). }
+function LoginAdmin: String;
+begin
+#ifdef Demo
+  Result := 'visitante';
+#else
+  Result := PaginaAcesso.Values[1];
+#endif
 end;
 
 function InstalacaoOk: Boolean;
@@ -150,14 +185,23 @@ end;
 
 procedure InitializeWizard;
 begin
+#ifdef Demo
+  PaginaAcesso := CreateInputQueryPage(wpSelectDir,
+    'Acesso à demonstração', 'Porta de acesso do {#Nome}.',
+    'A demonstração abre pelo navegador em http://<este computador>:<porta>. ' +
+    'Use uma porta diferente da do sistema real (que normalmente é a 3333).');
+  PaginaAcesso.Add('Porta de acesso (1024 a 65535):', False);
+  PaginaAcesso.Values[0] := GetPreviousData('Porta', '{#PortaPadrao}');
+#else
   PaginaAcesso := CreateInputQueryPage(wpSelectDir,
     'Acesso ao sistema', 'Porta de acesso e administrador do JAT Quote.',
     'Os operadores vão acessar pelo navegador em http://<este computador>:<porta>. ' +
     'O administrador inicial recebe uma senha temporária no fim da instalação.');
   PaginaAcesso.Add('Porta de acesso (1024 a 65535):', False);
   PaginaAcesso.Add('Login do administrador (letras minúsculas, números, ponto, hífen):', False);
-  PaginaAcesso.Values[0] := GetPreviousData('Porta', '3333');
+  PaginaAcesso.Values[0] := GetPreviousData('Porta', '{#PortaPadrao}');
   PaginaAcesso.Values[1] := GetPreviousData('Admin', 'admin');
+#endif
 
   PaginaPastaBackup := CreateInputDirPage(PaginaAcesso.ID,
     'Backup do banco de dados', 'Onde guardar as cópias de segurança.',
@@ -195,6 +239,10 @@ end;
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
   { Atualização: mantém as respostas da instalação anterior. }
+#ifdef Demo
+  { A demonstração não tem backup. }
+  if (PageID = PaginaPastaBackup.ID) or (PageID = PaginaBackup.ID) then begin Result := True; exit; end;
+#endif
   Result := Atualizacao and ((PageID = PaginaAcesso.ID) or (PageID = PaginaPastaBackup.ID) or
     (PageID = PaginaBackup.ID) or (PageID = PaginaRede.ID));
 end;
@@ -206,7 +254,9 @@ begin
   if CurPageID = PaginaAcesso.ID then
   begin
     Porta := Trim(PaginaAcesso.Values[0]);
+#ifndef Demo
     PaginaAcesso.Values[1] := Lowercase(Trim(PaginaAcesso.Values[1]));
+#endif
     if (not SoDigitos(Porta)) or (StrToIntDef(Porta, 0) < 1024) or (StrToIntDef(Porta, 0) > 65535) then
     begin
       MsgBox('Informe uma porta entre 1024 e 65535.', mbError, MB_OK);
@@ -217,7 +267,7 @@ begin
       MsgBox('A porta ' + Porta + ' já está em uso neste computador. Escolha outra (por exemplo, 3334).', mbError, MB_OK);
       Result := False;
     end
-    else if not LoginValido(PaginaAcesso.Values[1]) then
+    else if not LoginValido(LoginAdmin) then
     begin
       MsgBox('Login do administrador: de 3 a 40 caracteres, só letras minúsculas sem acento, números, ponto, hífen ou sublinhado.', mbError, MB_OK);
       Result := False;
@@ -248,16 +298,21 @@ begin
   else
     Result := Result +
       'Acesso:' + NewLine + Space + 'http://' + Lowercase(GetComputerNameString) + ':' + ValorPorta('') + NewLine +
+#ifdef Demo
+      Space + 'Usuário: visitante  ·  senha: quote2026' + NewLine + NewLine +
+      'Dados 100% fictícios, sem backup e sem plano de vigência.';
+#else
       Space + 'Administrador: ' + PaginaAcesso.Values[1] + NewLine + NewLine +
       'Backup diário às ' + Trim(PaginaBackup.Values[0]) + ', guardando ' + Trim(PaginaBackup.Values[1]) + ' cópias em:' + NewLine +
       Space + PaginaPastaBackup.Values[0];
+#endif
   if MemoTasksInfo <> '' then Result := Result + NewLine + NewLine + MemoTasksInfo;
 end;
 
 procedure RegisterPreviousData(PreviousDataKey: Integer);
 begin
   SetPreviousData(PreviousDataKey, 'Porta', ValorPorta(''));
-  SetPreviousData(PreviousDataKey, 'Admin', PaginaAcesso.Values[1]);
+  SetPreviousData(PreviousDataKey, 'Admin', LoginAdmin);
   SetPreviousData(PreviousDataKey, 'PastaBackup', PaginaPastaBackup.Values[0]);
   SetPreviousData(PreviousDataKey, 'HoraBackup', Trim(PaginaBackup.Values[0]));
   SetPreviousData(PreviousDataKey, 'Copias', Trim(PaginaBackup.Values[1]));
@@ -297,7 +352,7 @@ begin
   Result := '';
   if Atualizacao and FileExists(AddBackslash(WizardDirValue) + 'scripts\configurar.ps1') then
   begin
-    WizardForm.PreparingLabel.Caption := 'Fazendo backup e parando o JAT Quote para atualizar...';
+    WizardForm.PreparingLabel.Caption := 'Fazendo backup e parando o {#Nome} para atualizar...';
     if not Exec(PowerShell, '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' +
       AddBackslash(WizardDirValue) + 'scripts\configurar.ps1" -Etapa parar', WizardDirValue, SW_HIDE,
       ewWaitUntilTerminated, Codigo) or (Codigo <> 0) then
@@ -331,9 +386,9 @@ begin
     Etapa('migrations', 'Atualizando a estrutura do banco...', '', 2, 5);
     { Só cria se não existir nenhum Admin (instalação anterior interrompida antes desta etapa). }
     Etapa('admin', 'Conferindo o administrador...',
-      '-AdminUsuario ' + PaginaAcesso.Values[1] + ' -SaidaAdmin "' + ExpandConstant('{tmp}\admin.txt') + '"', 3, 5);
+      '-AdminUsuario ' + LoginAdmin + ' -SaidaAdmin "' + ExpandConstant('{tmp}\admin.txt') + '"', 3, 5);
     LerAdmin;
-    Etapa('servico', 'Iniciando o JAT Quote...', Backup, 4, 5);
+    Etapa('servico', 'Iniciando o {#Nome}...', Backup, 4, 5);
   end
   else
   begin
@@ -343,7 +398,7 @@ begin
     Etapa('banco', 'Criando o banco do sistema...', '', 3, 7);
     Etapa('migrations', 'Criando as tabelas...', '', 4, 7);
     Etapa('admin', 'Criando o administrador...',
-      '-AdminUsuario ' + PaginaAcesso.Values[1] + ' -SaidaAdmin "' + ExpandConstant('{tmp}\admin.txt') + '"', 5, 7);
+      '-AdminUsuario ' + LoginAdmin + ' -SaidaAdmin "' + ExpandConstant('{tmp}\admin.txt') + '"', 5, 7);
     LerAdmin;
     Etapa('servico', 'Configurando a inicialização com o Windows, o backup e o Firewall...', Backup, 6, 7);
   end;
@@ -375,8 +430,16 @@ begin
       'ANOTE A SENHA AGORA: ela não será mostrada de novo. No primeiro acesso o sistema pede para trocá-la.'
   else
     Texto := Texto + 'Os usuários e senhas existentes foram mantidos.';
+#ifdef Demo
+  Texto := 'Abra pelo navegador:' + #13#10 + '    http://localhost:' + ValorPorta('') + #13#10 +
+    '    (de outra máquina da rede: ' + Endereco + ')' + #13#10#13#10 +
+    'Usuário:  visitante' + #13#10 + 'Senha:  quote2026' + #13#10#13#10 +
+    'Depois de uma apresentação, use Configurações > Demonstração > Restaurar demo.';
+  WizardForm.FinishedLabel.Caption := 'A demonstração do Quote está instalada, com dados 100% fictícios.';
+#else
   WizardForm.FinishedLabel.Caption := 'O JAT Quote está instalado e já está funcionando. ' +
     'Ele inicia sozinho com o Windows e faz backup do banco todos os dias.';
+#endif
   MemoFinal.Top := WizardForm.FinishedLabel.Top + WizardForm.FinishedLabel.Height + ScaleY(12);
   MemoFinal.Height := ScaleY(150);
   MemoFinal.Text := Texto;

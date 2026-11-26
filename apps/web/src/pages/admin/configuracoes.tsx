@@ -11,7 +11,9 @@ import {
 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
+import { RestaurarDemo } from '@/components/demo';
 import { PlanoVigencia } from '@/components/plano-vigencia';
+import { useEdicao } from '@/lib/edicao';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Field, FormError } from '@/components/field';
@@ -42,6 +44,7 @@ const CHAVE_LINKS_ADMIN = ['links', 'admin'] as const;
 export default function ConfiguracoesPage() {
   const [params, setParams] = useSearchParams();
   const aba = params.get('aba') ?? 'links';
+  const { demo } = useEdicao();
   return (
     <Page className="max-w-5xl">
       <PageHeader
@@ -58,7 +61,7 @@ export default function ConfiguracoesPage() {
           <TabsTrigger value="ftl">Condições FTL</TabsTrigger>
           <TabsTrigger value="spot">Condições Spot</TabsTrigger>
           <TabsTrigger value="rastreio">Links de rastreio</TabsTrigger>
-          <TabsTrigger value="licenca">Plano de vigência</TabsTrigger>
+          <TabsTrigger value="licenca">{demo ? 'Demonstração' : 'Plano de vigência'}</TabsTrigger>
         </TabsList>
         <TabsContent value="links" className="mt-4">
           <LinksUteis />
@@ -76,7 +79,7 @@ export default function ConfiguracoesPage() {
           <LinksRastreio />
         </TabsContent>
         <TabsContent value="licenca" className="mt-4">
-          <PlanoVigencia />
+          {demo ? <RestaurarDemo /> : <PlanoVigencia />}
         </TabsContent>
       </Tabs>
     </Page>

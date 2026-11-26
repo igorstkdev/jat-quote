@@ -42,6 +42,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { api, ApiError, type ComponenteSpot, type Configuracoes, type Cotacao } from '@/lib/api';
 import { useMe } from '@/lib/auth';
+import { useEdicao } from '@/lib/edicao';
 import { cn } from '@/lib/utils';
 import {
   apagarRascunho,
@@ -130,6 +131,7 @@ export default function SpotPage() {
   const alterado = cotacao ? !formVazioOuIgual(form, base) : false;
   const somenteLeitura = cotacao?.status === 'APROVADA';
   const vazio = formVazioOuIgual(form, FORM_VAZIO);
+  const { empresa } = useEdicao();
   // Termos do modal: os gravados na cotação salva (sem alterações) ou os atuais das Configurações.
   const termos: Condicoes | null =
     (cotacao && !alterado ? cotacao.terms : null) ?? cfg.data?.condicoesSpot[form.modal] ?? null;
@@ -217,6 +219,7 @@ export default function SpotPage() {
       adValoremPct: resultado.adValorem.pct,
       observacoes: form.obs,
       termos: textoCondicoes(termos),
+      empresa,
     };
   };
 
