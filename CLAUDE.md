@@ -188,7 +188,7 @@ Menu lateral com atalhos configuráveis pelo Admin (nome + URL). Iniciais: Qualp
 - **Restaurar demo** (Configurações → Demonstração, só Admin, confirmação "RESTAURAR DEMO"): apaga tudo e recria os dados fictícios.
 - **Não existe "modo visitante" no sistema real** (§3.9): a demo é outra instalação, com outro banco.
 - E2E da demo: `npm run test:e2e:demo` (porta 3398).
-- Portas (1.2.1): o teste de porta livre confere quem já escuta em qualquer endereço; se a porta gravada do PostgreSQL estiver ocupada por outro programa, o setup troca para a próxima livre e corrige `postgresql.conf`, `dadospostgres.json` e o `.env`.
+- Portas (1.2.1): o teste de porta livre confere quem já escuta em qualquer endereço; se a porta gravada do PostgreSQL estiver ocupada por outro programa, o setup troca para a próxima livre e corrige `postgresql.conf`, `dados/postgres.json` e o `.env`.
 - Versão **1.2.0**.
 
 - ⚠️ Pendente: nome do usuário Admin do servidor (o instalador pergunta) e os CSVs reais exportados do Base44.
