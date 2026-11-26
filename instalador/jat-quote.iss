@@ -177,7 +177,9 @@ end;
 function PortaLivre(Porta: String): Boolean;
 var Codigo: Integer;
 begin
-  Result := Exec(PowerShell, '-NoProfile -NonInteractive -Command "try { $l = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Any, ' + Porta + '); $l.Start(); $l.Stop(); exit 0 } catch { exit 1 }"',
+  { Confere quem já escuta na porta (qualquer endereço) e depois tenta abrir: só abrir em 0.0.0.0
+    passa mesmo com outro programa escutando em 127.0.0.1 (25/11/2026). }
+  Result := Exec(PowerShell, '-NoProfile -NonInteractive -Command "if (Get-NetTCPConnection -State Listen -LocalPort ' + Porta + ' -ErrorAction SilentlyContinue) { exit 1 }; try { $l = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Any, ' + Porta + '); $l.Start(); $l.Stop(); exit 0 } catch { exit 1 }"',
     '', SW_HIDE, ewWaitUntilTerminated, Codigo) and (Codigo = 0);
 end;
 

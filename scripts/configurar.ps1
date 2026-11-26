@@ -49,11 +49,40 @@ function Nova-Senha([int]$Tamanho = 24) {
   -join ($bytes | ForEach-Object { $chars[$_ % $chars.Length] })
 }
 
+<#
+  Porta livre? Confere quem já escuta nela (qualquer endereço). Só abrir um listener em 0.0.0.0 não
+  basta no Windows: ele aceita mesmo com outro programa escutando em 127.0.0.1 na mesma porta
+  (25/11/2026: a demo pegou a 5433 do PostgreSQL do sistema real e não iniciou).
+#>
 function Test-PortaLivre([int]$p) {
-  try {
-    $l = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Any, $p)
-    $l.Start(); $l.Stop(); return $true
-  } catch { return $false }
+  if (Get-NetTCPConnection -State Listen -LocalPort $p -ErrorAction SilentlyContinue) { return $false }
+  foreach ($ip in @([System.Net.IPAddress]::Loopback, [System.Net.IPAddress]::Any)) {
+    try {
+      $l = New-Object System.Net.Sockets.TcpListener($ip, $p)
+      $l.Start(); $l.Stop()
+    } catch { return $false }
+  }
+  return $true
+}
+
+<# Porta do PostgreSQL ocupada por OUTRO programa (o nosso serviço parado): troca para uma livre. #>
+function Corrigir-PortaPg {
+  $estado = Get-EstadoPg
+  $nosso = Get-Service $servicoPg -ErrorAction SilentlyContinue
+  if (($nosso -and $nosso.Status -eq 'Running') -or (Test-PortaLivre $estado.porta)) { return }
+  $nova = $estado.porta + 1
+  while (-not (Test-PortaLivre $nova)) { $nova++; if ($nova -gt 5499) { throw 'Nenhuma porta livre entre 5433 e 5499 para o PostgreSQL.' } }
+  $conf = Join-Path $pgDados 'postgresql.conf'
+  $linhas = Get-Content $conf | Where-Object { $_ -notmatch '^\s*port\s*=' }
+  Set-Content $conf ($linhas + "port = $nova") -Encoding ASCII
+  @{ porta = $nova; servico = $servicoPg } | ConvertTo-Json | Set-Content $arqEstado -Encoding ASCII
+  # O .env (se já existir) aponta para a porta antiga.
+  $envArq = Join-Path $raiz '.env'
+  if (Test-Path $envArq) {
+    $cfg = Read-DotEnv
+    if ($cfg.DATABASE_URL) { Set-DotEnvValue 'DATABASE_URL' ($cfg.DATABASE_URL -replace ":$($estado.porta)/", ":$nova/") }
+  }
+  Log "A porta $($estado.porta) do PostgreSQL está em uso por outro programa: trocada para $nova." 'Aviso'
 }
 
 <# Arquivo só para Administradores e SYSTEM (senhas). #>
@@ -131,6 +160,7 @@ try {
         @{ porta = $pgPorta; servico = $servicoPg } | ConvertTo-Json | Set-Content $arqEstado -Encoding ASCII
         Log "PostgreSQL inicializado (porta $pgPorta)." 'Ok'
       }
+      Corrigir-PortaPg
       $estado = Get-EstadoPg
       # O serviço do PostgreSQL roda como NETWORK SERVICE: precisa de acesso à pasta de dados.
       & icacls.exe $pgDados /grant '*S-1-5-20:(OI)(CI)F' /T /Q | Out-Null
@@ -236,6 +266,7 @@ try {
     }
 
     'iniciar-banco' {
+      Corrigir-PortaPg
       Start-Service $servicoPg
       Aguardar-Pg (Get-EstadoPg).porta
       Log 'PostgreSQL no ar.' 'Ok'
